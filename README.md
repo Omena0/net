@@ -46,6 +46,20 @@ There are no callbacks (yet). Might add inline python support.
     size = 50
 ```
 
-## Hosting a server
+## Hosting a web server
 
+In the server directory, you can create a file for each page on your website.
 
+The page that your users will see when they navigate to / (root), is called index.ui.
+
+If a file is not found, they will be sent the page in 404.ui
+
+After you have your pages set up, run the server, and test if it works locally. (run your own dns)
+
+If you want to get a domain for your site, you can message me (Omena0) or make your own dns.
+
+## Hosting a DNS server
+
+Literally just run the server and port forward / tunnel it.
+
+Sites are stored in data/sites.json, where you can configure websites.
