@@ -24,7 +24,7 @@ def get_page(url):
     s.connect(addr)
     if '/' not in url: url += '/'
     print(url)
-    s.send((url.split('/')[1]+'.ui').encode())
+    s.send(('/'+url.split('/')[1]+'.ui').encode())
     page = s.recv(2048).decode()
     return page
 

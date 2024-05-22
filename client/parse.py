@@ -8,7 +8,7 @@ def getLevel(expr:str) -> int:
 def getAttrs(line:int,source) -> dict:
     expr = source[line]
     level = getLevel(expr)
-    print(f'{line:<4} {level:>2} {expr}')
+    print(f'{line:>3} | {expr}')
 
     if expr.strip() == '': return
     if expr.strip().startswith('#'): return
@@ -35,7 +35,7 @@ def parseExpr(line:int,source,parent=None):
     lastLevel = getLevel(source[line-1])
     if level < lastLevel: return parseExpr(line+1,source,parent)
     
-    print(f'{line:<4} {level:>2} {expr}')
+    print(f'{line:>3} | {expr}')
     expr = expr.strip()
     
     if expr == '':

@@ -14,7 +14,8 @@ ratelimit = {}
 def csHandler(cs:socket.socket,addr:tuple[str,int]):
     while True:
         try:
-            msg = cs.recv(1024).decode().removesuffix('.ui')
+            msg = cs.recv(1024).decode().removesuffix('.ui').removeprefix('/')
+            if msg == '': msg = 'index'
             print(msg)
             rl = ratelimit.get(cs,None)
             if rl and rl < t.time():
