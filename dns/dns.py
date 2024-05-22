@@ -27,12 +27,14 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
             ratelimit[cs] = t.time()
 
         except Exception as e:
-            print(e)
+            print(f'[-] {addr}')
             try: cs.send('500 Internal Server Error'.encode())
             except: ...
             return
 
 s.listen(5)
+
+print(f'Running DNS on {addr}')
 
 while True:
     cs,addr = s.accept()

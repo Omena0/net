@@ -1,6 +1,6 @@
 import socket
 
-dns_addr = ('127.0.0.1',53)
+dns_addr = ('0.tcp.eu.ngrok.io',15870)
 
 localDns = {}
 

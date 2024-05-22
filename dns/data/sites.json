@@ -1,10 +1,7 @@
 {
-    // Example domains
-    "example.com": "127.0.0.1:8080",
-    "example.net": "127.0.0.1:8080",
-    "example.org": "127.0.0.1:8080",
-
-    // Localhost domains
+    "example.com": "7.tcp.eu.ngrok.io:12007",
+    "example.net": "7.tcp.eu.ngrok.io:12007",
+    "example.org": "7.tcp.eu.ngrok.io:12007",
     "localhost": "127.0.0.1:8080",
     "127.0.0.1": "127.0.0.1:8080"
 }
