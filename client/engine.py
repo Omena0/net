@@ -139,8 +139,7 @@ class Button:
         return self.hovered
 
     def render(self):
-        
-        color = self.color if self.hovered else self.hoverColor
+        color = self.color if not self.hovered else self.hoverColor
         pygame.draw.rect(
             root.disp,
             color,
@@ -775,13 +774,15 @@ class Line:
             self,
             from_:tuple[int,int],
             to:tuple[int,int],
-            color=(255, 255, 255)
+            color=(255, 255, 255),
+            width=5
         ):
         
         self.parent = None
         
         # Style
         self.color = color
+        self.width = width
         
         # Position
         self.from_ = from_
@@ -798,11 +799,9 @@ class Line:
         self.layer = 0      # Set in .add()
         self.visible = True
 
-    def setPos(self, from_,to):
-        self.from_ = from_
-        self.to = to
-        self.x = from_[0]
-        self.y = from_[1]
+    def setPos(self, x, y):
+        self.x = x
+        self.y = y
         self.pos = self.x,self.y
         self.abs_x = self.x + self.parent.abs_x
         self.abs_y = self.y + self.parent.abs_y
@@ -1026,7 +1025,6 @@ class Root:
         child.setPos(child.x,child.y)
         if self.children:
             for i, c in enumerate(self.children):
-                print(i,c,self.children)
                 if child.layer <= c.layer:
                     self.children.insert(i, child)
                     break
@@ -1047,6 +1045,10 @@ class Root:
                 child.render()
         pygame.display.flip()
         return self
+
+    def remove(self,object):
+        self.children.remove(object)
+        del object
 
     def event(self, event:pygame.event.Event):
         global x, y

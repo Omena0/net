@@ -1,78 +1,131 @@
 # This is used to create a gui from a .ui file
 
 import engine as ui
+from typing import Any
+
+scripts:dict[str,list[str]] = {} # "Script name": [Script code]
+events:dict[str,list[str]]  = {} # "Event name":  [Script code]
+objects:dict[str,Any]       = {} # "Object class": "Script name"
+
+def runScript(script:str):
+    src = scripts[script]
+    exec(src,globals(),locals())
+    globals().update(locals())
+
+def runEvent(event):
+    if event not in events.keys():
+        print(f'[ERROR] Event not found: {event}')
+        return
+    src = events[event]
+    exec(src,globals(),locals())
+    globals().update(locals())
 
 def getLevel(expr:str) -> int:
     return expr.count('    ',0,expr.rfind('    ')+4)
 
-def getAttrs(line:int,source) -> dict:
-    expr = source[line]
-    level = getLevel(expr)
-    print(f'{line:>3} | {expr}')
 
-    if expr.strip() == '': return
-    if expr.strip().startswith('#'): return
-
+def getAttrs(startline:int,source) -> dict:
     attr = {}
-    key,value = expr.split('=')
-    key,value = key.strip(), value.strip()
-    value = eval(value,{},{})
-
-
-    attr[key] = value
-    if getLevel(source[line+1]) < level:
-        return attr
-    a = getAttrs(line+1,source)
-    if a is None: return attr
-    attr |= a
+    level = getLevel(source[startline])
+    for line,i in enumerate(source[startline:]):
+        if getLevel(i) < level: break
+        i = i.strip()
+        print(f'[ATTR]   {line+startline:>3} | {i}')
+        key, value = i.split('=')
+        key = key.strip()
+        value = eval(value)
+        attr[key] = value
     return attr
+
+def getScript(startLine:int,source):
+    script = ''
+    for line,i in enumerate(source[startLine:]):
+        if getLevel(i) == 0 and i.strip() != '': break
+        print(f'[SCRIPT] {line+startLine:>3} | {i}')
+        i = i.removeprefix('    ')
+        script += f'\n{i}'
+    return script
 
 def parseExpr(line:int,source,parent=None):
     if line >= len(source): return
     if parent is None: parent = ui.root
-    expr = source[line]
+    expr:str = source[line]
     level = getLevel(expr)
     lastLevel = getLevel(source[line-1])
     if level < lastLevel: return parseExpr(line+1,source,parent)
     
-    print(f'{line:>3} | {expr}')
+    print(f'[EXPR]   {line:>3} | {expr}')
     expr = expr.strip()
     
     if expr == '':
         return parseExpr(line+1,source,parent)
 
+    if expr.startswith('!'):
+        if expr.startswith('!script'):
+            script = getScript(line+1,source)
+            scripts[expr.split(':')[1]] = script
+            return parseExpr(line+script.count('\n')+1,source,parent)
+
+        elif expr.startswith('!event'):
+            script = getScript(line+1,source)
+            events[expr.split(':')[1]] = script
+            return parseExpr(line+script.count('\n')+1,source,parent)
+
     if expr.startswith('#'):
+        class_ = None
+        if ':' in expr:
+            expr, class_ = expr.split(':')
         attr = getAttrs(line+1,source)
         if not attr:
             return parseExpr(line+1,source,parent)
+        
+        layer = 0
+        if 'layer' in attr.keys(): layer = attr.pop('layer')
         
         if expr == '#root':
             if 'bg' not in attr.keys():
                 attr['bg'] = (100,100,100)
 
             ui.root = ui.Root(title=attr['title'],bg=attr['bg'])
-            ui.root.width  = attr['size'][0]
-            ui.root.height = attr['size'][1]
+            if 'size' in attr.keys(): ui.root.res = attr['size']
+            if 'resizable' in attr.keys(): ui.root.resizable = attr['resizable']
         
         elif expr == '#frame':
             frame = ui.Frame(**attr).add(parent)
             return parseExpr(line+len(attr)+1,source,frame)
         
-        elif expr.startswith('#'):
-            getattr(ui,expr.replace('#','').capitalize())(
+        else:
+            a = getattr(ui,expr.replace('#','').capitalize())(
                 **attr
-            ).add(parent)
+            ).add(parent,layer=layer)
+            if class_:
+                objects[class_] = a
         
     
         return parseExpr(line+len(attr)+1,source,parent)
 
+    else:
+        parseExpr(line+1,source,parent)
+
 
 def render(src:str):
+    global events
     source = src.splitlines()
-    parseExpr(0,source)
+    source.append('')
+    source.append('')
 
-    ui.root.show()
+    parseExpr(0,source)
+    
+    if not ui.root:
+        print('[ERROR] "ui.root" Is not defined.')
+        return
+    
+    runEvent('onLoad')
+
+    ui.root.show(ui.root.resizable)
     ui.mainloop()
+    runEvent('onUnload')
+    events = {}
     ui.root = None
 
 

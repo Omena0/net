@@ -1,0 +1,22 @@
+
+#root
+    title = "Games.io - Home"
+    size = (700,600)
+    bg = (35,35,50)
+    resizable = False
+
+#area
+    position = (10,10)
+    width = 680
+    height = 580
+    color = (45,45,70)
+    corner_radius = 15
+    layer = -1
+
+#text
+    position = (100, 100)
+    text = "Games.io - Your hub for games"
+    size = 50
+    color = (60,60,200)
+
+

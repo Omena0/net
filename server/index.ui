@@ -1,12 +1,49 @@
 
 #root
-    title = "Test"
-    size = (500,500)
+    title = "Example Domain"
+    size = (750,500)
     bg = (50,50,50)
 
+#area
+    position = (10,10)
+    width = 730
+    height = 300
+    color = (100,100,100)
+    layer = -1
+
 #text
-    text = "Hello world!"
-    position = (220,220)
+    text = 'Example Domain'
+    position = (50,75)
     size = 50
 
+#text
+    text = 'This domain is for use in illustrative examples in documents. You may use this'
+    position = (50,150)
+    size = 25
 
+#text
+    text = 'domain in literature without prior coordination or asking for permission.'
+    position = (50,190)
+    size = 25
+
+!script:click
+    import webbrowser
+    webbrowser.open('https://www.iana.org/help/example-domains')
+
+#button
+    text = 'More Information'
+    position = (48,225)
+    color = (100,100,100)
+    hover_color = (110,110,110)
+    width = 150
+    height = 20
+    size = 25
+    font_color = (100, 200, 230)
+    action = 'click'
+
+#line
+    from_ = (50,240)
+    to = (193,240)
+    color = (100, 200, 230)
+    width = 2
+    layer = 1

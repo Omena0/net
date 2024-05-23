@@ -21,9 +21,12 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
             rl = ratelimit.get(cs,None)
             if rl and rl < t.time():
                 cs.send('429 Too Many Requests'.encode())
+                print('429 Too Many Requests')
                 continue
-
-            cs.send(sites.get(msg,'Not found').encode())
+            
+            site = sites.get(msg,'Not found')
+            cs.send(site.encode())
+            print(site)
             ratelimit[cs] = t.time()
 
         except Exception as e:

@@ -1,0 +1,18 @@
+
+#root
+    title = "Minecraft"
+    size = (500,500)
+    bg = (50,50,50)
+    resizable = False
+
+#text
+    position = (10, 100)
+    text = "Lmao i didint make minecraft"
+    size = 50
+    color = (255,255,255)
+
+!event:onLoad
+    import webview
+    webview.create_window('Minecraft','https://eaglercraft.com/mc/1.8.8/',fullscreen=True)
+    webview.start()
+    exit(1)
