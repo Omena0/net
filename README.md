@@ -1,6 +1,8 @@
 
 # Net
 
+# [BROWSER DOWNLOAD LINK](https://raw.githubusercontent.com/Omena0/net/main/dist/client.exe)
+
 Literally the internet but with basically no features
 
 ## .ui Syntax
