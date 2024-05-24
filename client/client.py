@@ -1,6 +1,21 @@
 import socket
+import json
+import os
 
-dns_addr = "2.tcp.eu.ngrok.io", 16379
+# Imports for use in .ui scripts
+import threading
+import keyboard
+import random
+import time
+import sys
+
+
+try: os.chdir('client')
+except: ...
+
+config = json.load(open('config.json'))
+
+dns_addr = tuple(config['dns_addr'])
 
 localDns = {}
 
@@ -12,6 +27,7 @@ def get_from_dns(url:str, nocache=False):
     s.send(url.encode())
     addr = s.recv(128).decode()
     if addr == 'Not found': return None
+    print(addr)
     addr = addr.split(':')
     localDns[url] = addr[0],int(addr[1])
     return addr[0],int(addr[1])
@@ -27,14 +43,25 @@ def get_page(url):
     page = s.recv(4098).decode()
     return page
 
+def redirect(site:str):
+    import parse
+    parse.init(redirect)
+    page = get_page(site)
+    if not page: return
+    try: parse.render(page)
+    except: return
+
 
 while True:
     import parse
+    parse.init(redirect)
+    
     page = get_page(input('URL: '))
     if not page: continue
     try: parse.render(page)
     except Exception as e:
         print(e.with_traceback(None))
+        raise e
 
 
 

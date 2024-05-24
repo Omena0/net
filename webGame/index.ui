@@ -19,4 +19,23 @@
     size = 50
     color = (60,60,200)
 
+#text
+    position = (100,150)
+    text = "Under construction | Visit games.io/snake for snake :)"
+    size = 25
+    color = (100,100,255)
 
+!script:script1
+    print('Redirecting...')
+    redirect('games.io/snake')
+
+#button
+    position = (100,200)
+    width = 200
+    height = 50
+    text = "Go to snake"
+    size = 40
+    color = (70,70,200)
+    hover_color = (100,100,255)
+    font_color = (110,110,255)
+    action = "script1"

@@ -1,11 +1,15 @@
 # This is used to create a gui from a .ui file
 
 import engine as ui
-from typing import Any
+from typing import Any, Callable
 
 scripts:dict[str,list[str]] = {} # "Script name": [Script code]
 events:dict[str,list[str]]  = {} # "Event name":  [Script code]
 objects:dict[str,Any]       = {} # "Object class": "Script name"
+
+def init(r:Callable):
+    global redirect
+    redirect = r
 
 def runScript(script:str):
     src = scripts[script]
@@ -28,9 +32,10 @@ def getAttrs(startline:int,source) -> dict:
     attr = {}
     level = getLevel(source[startline])
     for line,i in enumerate(source[startline:]):
-        if getLevel(i) < level: break
-        i = i.strip()
+        if getLevel(i) < level and i.strip() != '': break
         print(f'[ATTR]   {line+startline:>3} | {i}')
+        i = i.strip()
+        if '=' not in i: break
         key, value = i.split('=')
         key = key.strip()
         value = eval(value)
@@ -60,6 +65,9 @@ def parseExpr(line:int,source,parent=None):
     if expr == '':
         return parseExpr(line+1,source,parent)
 
+    if expr.startswith('//'):
+        return parseExpr(line+1,source,parent)
+    
     if expr.startswith('!'):
         if expr.startswith('!script'):
             script = getScript(line+1,source)
@@ -81,6 +89,9 @@ def parseExpr(line:int,source,parent=None):
         
         layer = 0
         if 'layer' in attr.keys(): layer = attr.pop('layer')
+        if 'action' in attr.keys():
+            s = attr['action']
+            attr['action'] = lambda *_: runScript(s)
         
         if expr == '#root':
             if 'bg' not in attr.keys():
@@ -109,7 +120,12 @@ def parseExpr(line:int,source,parent=None):
 
 
 def render(src:str):
-    global events
+    global events, scripts
+    ui.pygame.quit()
+    events = {}
+    scripts = {}
+    ui.root = None
+
     source = src.splitlines()
     source.append('')
     source.append('')
@@ -125,7 +141,5 @@ def render(src:str):
     ui.root.show(ui.root.resizable)
     ui.mainloop()
     runEvent('onUnload')
-    events = {}
-    ui.root = None
 
 

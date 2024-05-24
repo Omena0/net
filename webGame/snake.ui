@@ -20,7 +20,7 @@
     corner_radius = 15
     layer = -1
 
-!event:onLoad
+!script:startGame
     print('Loaded!')
     import keyboard as kb
     import random as r
@@ -34,9 +34,9 @@
     running = True
 
     def gameOver():
-        global root, kb, running
+        global root, kb, running, game_over_text
 
-        ui.Text(
+        game_over_text = ui.Text(
             position = (70,175),
             text = "Game Over!",
             size = 100,
@@ -44,7 +44,6 @@
         ).add(root,5)
 
         running = False
-        kb.unhook_all()
 
     def makeSquare(x,y,type='player'):
         global player, players, gridsize, gameOver, r, length, apple
@@ -85,7 +84,15 @@
 
     def on_press(key):
         global root, players, running
-        if not running: return
+        if not running:
+            for i in players:
+                root.remove(i)
+            root.remove(apple)
+            root.remove(game_over_text)
+            kb.unhook_all()
+            objects['score'].text = 'Score: 0'
+            runScript('startGame')
+            return
         key = key.name
         player = players[-1]
         if key == 'w':
@@ -104,6 +111,9 @@
             players.pop(0)
 
     kb.on_press(on_press)
+
+!event:onLoad
+    runScript('startGame')
 
 !event:onUnload
     print('Unloaded!')

@@ -5,7 +5,9 @@ pygame.threads.init(2)
 
 clock = pygame.time.Clock()
 
+
 # Basic
+running = True
 root   = None
 focus  = None
 
@@ -1085,12 +1087,12 @@ def update():
     except Exception as e:
         print(e)
         if debug: raise e
-        return None
+        return
 
 debug = False
 
 def mainloop():
-    while update(): ...
+    while update() and running: ...
 
 
 
