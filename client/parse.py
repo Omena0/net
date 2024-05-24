@@ -1,15 +1,21 @@
 # This is used to create a gui from a .ui file
 
 import engine as ui
-from typing import Any, Callable
+from typing import Any
+import time as t
+import os
 
 scripts:dict[str,list[str]] = {} # "Script name": [Script code]
 events:dict[str,list[str]]  = {} # "Event name":  [Script code]
 objects:dict[str,Any]       = {} # "Object class": "Script name"
 
-def init(r:Callable):
-    global redirect
-    redirect = r
+def init(redirect_,get_page_,get_file_,get_from_dns_,addr_):
+    global redirect, get_page, get_file, get_from_dns, addr
+    redirect = redirect_
+    get_page = get_page_
+    get_file = get_file_
+    get_from_dns = get_from_dns_
+    addr = addr_
 
 def runScript(script:str):
     src = scripts[script]
@@ -102,9 +108,19 @@ def parseExpr(line:int,source,parent=None):
             if 'resizable' in attr.keys(): ui.root.resizable = attr['resizable']
         
         elif expr == '#frame':
-            frame = ui.Frame(**attr).add(parent)
+            frame = ui.Frame(**attr).add(parent,layer)
             return parseExpr(line+len(attr)+1,source,frame)
         
+        elif expr == '#image':
+            path = attr.pop('image_path')
+            t.sleep(0.2)
+            img = get_file(addr,path)
+            
+            os.makedirs(f'cache',exist_ok=True)
+            with open(f'cache/{path}','wb') as f: f.write(img)
+            ui.Image(**attr,image_path=f'cache/{path}').add(parent,layer)
+            return parseExpr(line+len(attr)+1,source,parent)
+
         else:
             a = getattr(ui,expr.replace('#','').capitalize())(
                 **attr

@@ -1,0 +1,48 @@
+
+#root
+    title = "Games.io - 404 Not Found"
+    size = (600,500)
+    bg = (35,35,50)
+    resizable = False
+
+#area
+    position = (10,10)
+    width = 580
+    height = 480
+    color = (45,45,70)
+    corner_radius = 15
+    layer = -1
+
+#text
+    position = (150, 50)
+    text = "404 - Not Found"
+    size = 60
+    color = (70,70,240)
+
+#text
+    position = (110,100)
+    text = "The site you are trying to access"
+    size = 35
+    color = (75,75,250)
+
+#text
+    position = (95,125)
+    text = "does not exist or has been removed."
+    size = 35
+    color = (75,75,250)
+
+!script:home
+    print('Redirecting...')
+    redirect('games.io')
+
+#button
+    position = (150,175)
+    width = 300
+    height = 75
+    text = "Back to home"
+    action = "home"
+    size = 60
+    color = (55,55,90)
+    hover_color = (80,80,120)
+    font_color = (110,110,255)
+    layer = 1

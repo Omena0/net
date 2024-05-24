@@ -5,58 +5,121 @@ Literally the internet but with basically no features
 
 ## .ui Syntax
 
-Components start with `#` (case insensitive)
+With .ui files, there are 3 different types of nodes.
+Here I explain all of them to the best of my ability.
 
-Attributes indented, with typical key = value syntax
+For more examples,
+see the websites in this repository.
 
-Child items also indented.
+---
 
-For a full list of components, see [Ui-engine](https://github.com/Omena0/Ui-engine)
+### General
 
-There are no callbacks (yet). Might add inline python support.
+---
 
-### Examples
+In .ui files, the parent node of any given line is determined by indentation.
 
-#### 404 - Not Found
+All nodes have a start character,
+which for components is `#` and for scripts and events is `!`
 
-```py
-#root
-    title = "404 - Not Found"
-    size = (500,500)
-    bg = (50,50,50)
+---
 
-#text
-    position = (250, 250)
-    text = "404 - Not Found"
-    size = 50
-    color = (255,255,255)
+### Components
+
+Components are (on their own) static elements of a page.
+They can only change with the 2 other types of nodes.
+
+Components begin with their start character
+(`#`) followed by the component type.
+
+---
+
+Optionally components can have an id.
+Which allows editing it from a script or event.
+
+Component id's are marked after the component name and separated from it using a `:`
+
+#### Example: #text:mytext
+
+---
+
+Components have attributes,
+that define where it is on the page,
+how it looks like, and what it does. (e.g., buttons)
+
+For a full list of components, see [`Ui-engine`](https://github.com/Omena0/Ui-engine)
+
+### Scripts
+
+---
+
+Scripts are pieces of code,
+that can be run as an action to a component,
+or manually from another script/event
+and also have an identifier similar to components.
+
+Scripts start with their start character (`!`) followed by `script`.
+Scripts must have an identifier to be useful.
+
+#### Example
+
+```python
+!script:onPress
+    print('Button Pressed!')
+
+#button
+    position = (200,200)
+    width = 50
+    height = 500
+    text = "Press"
+    action = "onPress"
+    size = 30
 ```
 
-#### Hello world
+(here, `Button Pressed!` will be printed to
+the console when the button is pressed.)
 
-```py
-#root
-    title = "Test"
-    size = (500,500)
-    bg = (50,50,50)
+---
 
-#text
-    text = "Hello world!"
-    position = (220,220)
-    size = 50
+### Events
+
+---
+
+Events are pieces of code,
+that get called automatically when the said event occurs.
+
+Instead of having an id,
+the event type is specified after the `:`.
+
+#### Current Events
+
+- onLoad
+- onUnload
+
+#### Example
+
+```python
+!event:onLoad
+    print('Loaded!')
 ```
+
+(here, `Loaded!` will be printed to the
+console when the site is loaded.)
 
 ## Hosting a web server
 
-In the server directory, you can create a file for each page on your website.
+In the server's directory,
+each file corresponds to a web page.
 
-The page that your users will see when they navigate to / (root), is called index.ui.
+The home page (`website.com/`) is `index.ui`
 
-If a file is not found, they will be sent the page in 404.ui
+If the page the user is trying to access is not found,
+the 404.ui page will be displayed.
 
-After you have your pages set up, run the server, and test if it works locally. (run your own dns)
+By default, users are only able to
+access theese file extensions: `.ui`, `.png`, `.jpeg` and `.txt`
 
-If you want to get a domain for your site, you can message me (Omena0) or make your own dns.
+You can configure theese in the source code.
 
 ## Hosting a DNS server
 

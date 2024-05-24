@@ -9,30 +9,29 @@ addr = ('127.0.0.1',8080)
 
 s.bind(addr)
 
-ratelimit = {}
-
 def csHandler(cs:socket.socket,addr:tuple[str,int]):
     while True:
         try:
-            msg = cs.recv(1024).decode().removesuffix('.ui').removeprefix('/')
-            if msg == '': msg = 'index'
-            print(f'Serving site: {msg}')
-            rl = ratelimit.get(cs,None)
-            if rl and rl < t.time():
-                cs.send('429 Too Many Requests'.encode())
-                print('429 Too Many Requests')
-                continue
+            msg = cs.recv(1024).decode().removeprefix('/')
+            if msg == '': msg = 'index.ui'
+            if '.' not in msg: msg += '.ui'
             
-            if not msg.endswith('.ui'): msg += '.ui'
+            msg = msg.replace('..','').replace(':','')
+            
+            if msg.split('.')[1] not in ['ui','png','jpeg','txt']:
+                cs.send('400 Bad Request'.encode())
+                print('400 Bad Request')
+                continue
+
+            print(f'Serving file: {msg}')
             
             if msg not in os.listdir('.'):
-                with open('404.ui') as f: site = f.read()
+                with open('404.ui','rb') as f: site = f.read()
             
             else:
-                with open(msg) as f: site = f.read()
+                with open(msg,'rb') as f: site = f.read()
             
-            cs.send(site.encode())
-            ratelimit[cs] = t.time()
+            cs.send(site)
 
         except ConnectionAbortedError:
             print(f'[-] {addr}')
@@ -40,7 +39,8 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
         
         except Exception as e:
             print(f'[-] {addr} [{e}]')
-            try: cs.send('500 Internal Server Error\n\nTHIS IS NOT A REGULAR WEBSITE, DONT USE IT AS ONE!\nTHIS IS A WEBSITE FOR THE NET PROJECT: https://gthub.com/Omena0/net'.encode())
+            msg = '\n\nTHIS IS NOT A REGULAR WEBSITE, DONT USE IT AS ONE!\nTHIS IS A WEBSITE FOR THE NET PROJECT: https://gthub.com/Omena0/net' if 'GET' in msg else ''
+            try: cs.send(f'500 Internal Server Error{msg}'.encode())
             except: ...
             return
 

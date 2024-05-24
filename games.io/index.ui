@@ -1,0 +1,46 @@
+
+#root
+    title = "Games.io - Home"
+    size = (700,600)
+    bg = (35,35,50)
+    resizable = False
+
+#area
+    position = (10,10)
+    width = 680
+    height = 580
+    color = (45,45,70)
+    corner_radius = 15
+    layer = -1
+
+#text
+    position = (50, 50)
+    text = "Games.io - Your hub for games"
+    size = 60
+    color = (60,60,200)
+
+#text
+    position = (60,100)
+    text = "Under construction - Click a button to play"
+    size = 35
+    color = (100,100,255)
+
+!script:snake
+    print('Redirecting...')
+    redirect('games.io/snake')
+
+#image
+    position = (80,150)
+    image_path = 'snake.png'
+
+#button
+    position = (65,310)
+    width = 200
+    height = 50
+    text = "Snake"
+    size = 60
+    color = (55,55,90)
+    hover_color = (80,80,120)
+    font_color = (110,110,255)
+    action = "snake"
+    layer = 1

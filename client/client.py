@@ -1,5 +1,6 @@
+from tkinter import messagebox
+import requests
 import socket
-import json
 import os
 
 # Imports for use in .ui scripts
@@ -9,13 +10,30 @@ import random
 import time
 import sys
 
-
 try: os.chdir('client')
 except: ...
 
-config = json.load(open('config.json'))
+API_URL = 'https://omena0.github.io/api'
 
-dns_addr = tuple(config['dns_addr'])
+def apiGet(path,full_path=False):
+    """Get a string from api
+
+    Args:
+        path (str): api path
+
+    Returns:
+        str: string from api
+    """
+    if not full_path: response = requests.get(f"{API_URL}/{path}")
+    else: response = requests.get(f"{path}")
+    response.raise_for_status()
+    return response.text.strip()
+
+a,b = apiGet('net/dns_ip').split(':')
+dns_addr = (a,int(b))
+
+
+print(f'DNS Address: {dns_addr}')
 
 localDns = {}
 
@@ -27,25 +45,41 @@ def get_from_dns(url:str, nocache=False):
     s.send(url.encode())
     addr = s.recv(128).decode()
     if addr == 'Not found': return None
+    if addr == '500 Internal Server Error': return None
     print(addr)
     addr = addr.split(':')
     localDns[url] = addr[0],int(addr[1])
     return addr[0],int(addr[1])
 
+def get_file(addr,url):
+    s = socket.socket()
+    s.connect(addr)
+
+    s.send(f'/{url}'.encode())
+    page = s.recv(4294967296)
+
+    return page
+
 def get_page(url):
     if url.strip() == '': return
     s = socket.socket()
-    addr = get_from_dns(url)
     try: s.connect(addr)
     except: return
+    
     if '/' not in url: url += '/'
-    s.send(('/'+url.split('/')[1]+'.ui').encode())
-    page = s.recv(4098).decode()
+    url = url.split('/',1)[1]
+
+    s.send(f'/{url}'.encode())
+    page = s.recv(4294967296).decode()
+    print(page)
+
     return page
+
+
 
 def redirect(site:str):
     import parse
-    parse.init(redirect)
+    parse.init(redirect,get_page,get_file,get_from_dns,addr)
     page = get_page(site)
     if not page: return
     try: parse.render(page)
@@ -54,9 +88,14 @@ def redirect(site:str):
 
 while True:
     import parse
-    parse.init(redirect)
     
-    page = get_page(input('URL: '))
+    url = input('URL: ')
+    if url.strip() == '': continue
+    addr = get_from_dns(url)
+    
+    parse.init(redirect,get_page,get_file,get_from_dns,addr)
+    
+    page = get_page(url)
     if not page: continue
     try: parse.render(page)
     except Exception as e:

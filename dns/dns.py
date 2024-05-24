@@ -11,26 +11,22 @@ s.bind(addr)
 
 sites = json.load(open('data/sites.json'))
 
-ratelimit = {}
-
 def csHandler(cs:socket.socket,addr:tuple[str,int]):
     while True:
         try:
             msg = cs.recv(1024).decode()
             print(msg)
-            rl = ratelimit.get(cs,None)
-            if rl and rl < t.time():
-                cs.send('429 Too Many Requests'.encode())
-                print('429 Too Many Requests')
-                continue
             
             site = sites.get(msg,'Not found')
             cs.send(site.encode())
             print(site)
-            ratelimit[cs] = t.time()
+
+        except ConnectionAbortedError:
+            print(f'[-] {addr}')
+            return
 
         except Exception as e:
-            print(f'[-] {addr}')
+            print(f'[-] {addr} [{e}]')
             try: cs.send('500 Internal Server Error'.encode())
             except: ...
             return

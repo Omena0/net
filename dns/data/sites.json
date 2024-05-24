@@ -2,5 +2,5 @@
     "example.com": "-",
     "localhost": "127.0.0.1:8080",
     "127.0.0.1": "127.0.0.1:8080",
-    "games.io": "7.tcp.eu.ngrok.io:15240 "
+    "games.io": "4.tcp.eu.ngrok.io:13642"
 }
