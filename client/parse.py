@@ -113,7 +113,7 @@ def parseExpr(line:int,source,parent=None):
         
         elif expr == '#image':
             path = attr.pop('image_path')
-            t.sleep(0.2)
+            t.sleep(0.05)
             img = get_file(addr,path)
             
             os.makedirs(f'cache',exist_ok=True)

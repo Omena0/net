@@ -39,7 +39,8 @@ Components begin with their start character
 Optionally components can have an id.
 Which allows editing it from a script or event.
 
-Component id's are marked after the component name and separated from it using a `:`
+Component id's are marked after the component name
+and separated from it using a `:`
 
 #### Example: #text:mytext
 

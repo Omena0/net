@@ -12,7 +12,8 @@ s.bind(addr)
 def csHandler(cs:socket.socket,addr:tuple[str,int]):
     while True:
         try:
-            msg = cs.recv(1024).decode().removeprefix('/')
+            msg = cs.recv(1024)
+            msg = msg.decode().removeprefix('/')
             if msg == '': msg = 'index.ui'
             if '.' not in msg: msg += '.ui'
             

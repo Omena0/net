@@ -5,7 +5,6 @@ import os
 
 # Imports for use in .ui scripts
 import threading
-import keyboard
 import random
 import time
 import sys
@@ -29,8 +28,8 @@ def apiGet(path,full_path=False):
     response.raise_for_status()
     return response.text.strip()
 
-a,b = apiGet('net/dns_ip').split(':')
-dns_addr = (a,int(b))
+dns_addr = apiGet('net/dns_ip').split(':')
+dns_addr = dns_addr[0], int(dns_addr[1])
 
 
 print(f'DNS Address: {dns_addr}')
@@ -71,7 +70,6 @@ def get_page(url):
 
     s.send(f'/{url}'.encode())
     page = s.recv(4294967296).decode()
-    print(page)
 
     return page
 
@@ -82,8 +80,7 @@ def redirect(site:str):
     parse.init(redirect,get_page,get_file,get_from_dns,addr)
     page = get_page(site)
     if not page: return
-    try: parse.render(page)
-    except: return
+    parse.render(page)
 
 
 while True:

@@ -10,3 +10,7 @@
     w = webview.create_window('Minecraft','https://eaglercraft.com/mc/1.8.8/',fullscreen=True,frameless=True)
     webview.start()
     exit(1)
+
+!event:onUnload
+    print('Unloaded!')
+    redirect('games.io/index')

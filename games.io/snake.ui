@@ -22,7 +22,6 @@
 
 !script:startGame
     print('Loaded!')
-    import keyboard as kb
     import random as r
 
     root = ui.root
@@ -34,7 +33,7 @@
     running = True
 
     def gameOver():
-        global root, kb, running, game_over_text
+        global root, running, game_over_text
 
         game_over_text = ui.Text(
             position = (70,175),
@@ -89,7 +88,6 @@
                 root.remove(i)
             root.remove(apple)
             root.remove(game_over_text)
-            kb.unhook_all()
             objects['score'].text = 'Score: 0'
             runScript('startGame')
             return
@@ -98,7 +96,6 @@
             root.remove(players[0])
             players.pop(0)
 
-        key = key.name
         player = players[-1]
         if key == 'w':
             makeSquare(player.x/gridsize,player.y/gridsize-1)
@@ -111,13 +108,17 @@
 
         if not running: return
 
+    import pygame
+    def customEventListener(event:pygame.event.Event):
+        if event.type == 768:
+            on_press(event.dict['unicode'])
+    
+    root.addListener(customEventListener)
 
-    kb.on_press(on_press)
 
 !event:onLoad
     runScript('startGame')
 
 !event:onUnload
     print('Unloaded!')
-    kb.unhook_all()
-
+    redirect('games.io/index')

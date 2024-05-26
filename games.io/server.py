@@ -9,17 +9,20 @@ addr = ('127.0.0.1',8080)
 
 s.bind(addr)
 
+disc = '\n\nTHIS IS NOT A REGULAR WEBSITE, DONT USE IT AS ONE!\nTHIS IS A WEBSITE FOR THE NET PROJECT: https://github.com/Omena0/net'
+
 def csHandler(cs:socket.socket,addr:tuple[str,int]):
     while True:
         try:
-            msg = cs.recv(1024).decode().removeprefix('/')
+            msg = cs.recv(1024)
+            msg = msg.decode().removeprefix('/')
             if msg == '': msg = 'index.ui'
             if '.' not in msg: msg += '.ui'
             
             msg = msg.replace('..','').replace(':','')
             
             if msg.split('.')[1] not in ['ui','png','jpeg','txt']:
-                cs.send('400 Bad Request'.encode())
+                cs.send(f'400 Bad Request{disc}'.encode())
                 print('400 Bad Request')
                 continue
 
@@ -39,8 +42,7 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
         
         except Exception as e:
             print(f'[-] {addr} [{e}]')
-            msg = '\n\nTHIS IS NOT A REGULAR WEBSITE, DONT USE IT AS ONE!\nTHIS IS A WEBSITE FOR THE NET PROJECT: https://gthub.com/Omena0/net' if 'GET' in msg else ''
-            try: cs.send(f'500 Internal Server Error{msg}'.encode())
+            try: cs.send(f'500 Internal Server Error{disc}'.encode())
             except: ...
             return
 

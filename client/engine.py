@@ -985,6 +985,7 @@ class Root:
         self.setTitle(title)
         self.res = res
         self.children = []
+        self._customListeners = set()
         
         # Style
         self.bgColor = bg
@@ -1062,15 +1063,20 @@ class Root:
             )
             return
         
-        elif event.type == 1024:
+        elif event.type == 1024: # Mouse move
             x,y = event.dict['pos']
             return
 
         for child in self.children:
             if hasattr(child,'event') and child.visible:
                 child.event(event)
+        
+        if self._customListeners:
+            for listener in self._customListeners:
+                listener(event)
 
-
+    def addListener(self,listener):
+        self._customListeners.add(listener)
 
 def update():
     global frame, eventCount, root

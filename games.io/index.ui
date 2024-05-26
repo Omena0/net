@@ -29,6 +29,14 @@
     print('Redirecting...')
     redirect('games.io/snake')
 
+!script:life
+    print('Redirecting...')
+    redirect('games.io/life')
+
+!script:pong
+    print('Redirecting...')
+    redirect('games.io/pong')
+
 #image
     position = (80,150)
     image_path = 'snake.png'
@@ -44,3 +52,36 @@
     font_color = (110,110,255)
     action = "snake"
     layer = 1
+
+#image
+    position = (430,150)
+    image_path = 'life.png'
+
+#button
+    position = (415,310)
+    width = 200
+    height = 50
+    text = "Life"
+    size = 60
+    color = (55,55,90)
+    hover_color = (80,80,120)
+    font_color = (110,110,255)
+    action = "life"
+    layer = 1
+
+#image
+    position = (80,400)
+    image_path = 'snake.png'
+
+#button
+    position = (65,550)
+    width = 200
+    height = 50
+    text = "Pong"
+    size = 60
+    color = (55,55,90)
+    hover_color = (80,80,120)
+    font_color = (110,110,255)
+    action = "pong"
+    layer = 1
+
