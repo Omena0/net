@@ -27,7 +27,10 @@
     gridsize = 25
     grid:dict[(int,int): ui.Area] = {}
     
+    ui.usedEvents.append(ui.pygame.MOUSEBUTTONUP)
+    
     step = 0
+    mouseDown = False
     
     def makeSquare(x,y,color=(30,90,220)):
         global player, players, gridsize, gameOver, r, length, apple
@@ -79,9 +82,15 @@
             simulationStep()
     
     def customEventListener(event):
+        global down
+        print(event)
         if event.type == 768:
             Thread(target=on_press,args=[event.dict['unicode']]).start()
         elif event.type == 1025:
+            down = True
+        elif event.type == 1026:
+            down = False
+        
             x = round((event.dict['pos'][0]-gridsize/2)/gridsize)
             y = round((event.dict['pos'][1]-gridsize/2)/gridsize)
             if (x,y) in grid:

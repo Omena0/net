@@ -1065,7 +1065,6 @@ class Root:
         
         elif event.type == 1024: # Mouse move
             x,y = event.dict['pos']
-            return
 
         for child in self.children:
             if hasattr(child,'event') and child.visible:
