@@ -3,7 +3,7 @@
 
 # [BROWSER DOWNLOAD LINK](https://raw.githubusercontent.com/Omena0/net/main/dist/client.exe)
 
-Literally the internet but with basically no features
+Literally the internet but its worse than malware
 
 ## .ui Syntax
 
