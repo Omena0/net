@@ -5,6 +5,7 @@ from os import chdir
 
 # Imports for use in .ui scripts
 import threading
+import Chessnut
 import random
 import time
 import sys
