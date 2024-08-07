@@ -1,0 +1,441 @@
+
+#root
+    title = "Games.io - Chess"
+    size = (700,700)
+    bg = (35,35,50)
+    resizable = False
+
+#area
+    position = (10,10)
+    width = 680
+    height = 680
+    color = (45,45,70)
+    corner_radius = 10
+    layer = -2
+
+#area
+    position = (17,17)
+    width = 450
+    height = 450
+    color = (40,40,40)
+    corner_radius = 10
+    layer = -1
+
+// Chat area
+#area
+    position = (17,475)
+    width = 450
+    height = 207
+    color = (40,40,40)
+    corner_radius = 10
+    layer = -1
+
+// Side area (vertical)
+#area
+    position = (475,17)
+    width = 207
+    height = 666
+    color = (40,40,40)
+    corner_radius = 10
+    layer = -1
+
+#text
+    position = (30, 480)
+    text = "Live Chat"
+    size = 30
+    color = (60,60,200)
+
+#textbox:chatBox
+    position = (25, 650)
+    width = 435
+    height = 24
+    size = 20
+    color = (100,100,100)
+    focus_color = (75,75,75)
+    hover_color = (50,50,50)
+    font_color = (255,255,255)
+    corner_radius = 5
+    text = ""
+
+#text
+    position = (510,25)
+    text = "Username"
+    size = 40
+    color = (60,60,200)
+
+#textbox:username
+    position = (490,58)
+    width = 175
+    height = 40
+    size = 36
+    color = (100,100,100)
+    focus_color = (75,75,75)
+    hover_color = (50,50,50)
+    font_color = (255,255,255)
+    corner_radius = 10
+    text = ""
+
+#text
+    position = (510,104)
+    text = "Server ID"
+    size = 40
+    color = (60,60,200)
+
+#textbox:serverId
+    position = (490,136)
+    width = 175
+    height = 40
+    size = 36
+    color = (100,100,100)
+    focus_color = (75,75,75)
+    hover_color = (50,50,50)
+    font_color = (255,255,255)
+    corner_radius = 10
+    text = ""
+
+#button
+    position = (490,190)
+    width = 175
+    height = 40
+    size = 36
+    text = "Join Game"
+    color = (50,50,50)
+    color = (50,50,50)
+    hover_color = (75,75,75)
+    action = 'joinGame'
+
+#button
+    position = (490,240)
+    width = 175
+    height = 40
+    size = 35
+    text = "Create Game"
+    color = (50,50,50)
+    color = (50,50,50)
+    hover_color = (75,75,75)
+    action = 'createGame'
+
+#text
+    position = (500,300)
+    text = "Player List:"
+    size = 40
+    color = (60,60,200)
+
+!script:joinGame
+    if not ingame:
+        import socket
+        username = objects['username'].text
+        id = objects['serverId'].text
+        
+        s = socket.socket()
+        s.connect(addr)
+        
+        s.send(f'!set_name|{username}'.encode())
+        t.sleep(0.1)
+        s.send(f'!join_game|{id}'.encode())
+
+        players = s.recv(1024).decode().split('|')
+        
+        if players[0] == 'E':
+            print(f'Error: {players[1]}')
+
+        else:
+            objects['username'].inactive = True
+            objects['serverId'].inactive = True
+            print(f'Joined game with id {id}')
+        
+            ingame = True
+            team = 'b'
+            updatePlayerlist()
+
+            Thread(target=server,daemon=True).start()
+
+!script:createGame
+    if not ingame:
+        import socket
+        username = objects['username'].text
+        id = objects['serverId'].text
+
+        objects['username'].inactive = True
+        objects['serverId'].inactive = True
+        
+        s = socket.socket()
+        s.connect(addr)
+        
+        s.send(f'!set_name|{username}'.encode())
+        t.sleep(0.1)
+        s.send(f'!create_game|{id}'.encode())
+        
+        print(f'Game created with id {id}')
+        
+        ingame = True
+        team = 'w'
+        players = [username]
+        updatePlayerlist()
+
+        Thread(target=server,daemon=True).start()
+
+
+!script:initBoard
+    gridsize = 8
+
+    def makeSquare(x,y,color):
+        global imageGrid
+
+        if color == 1:
+            color = (200,200,200)
+        else:
+            color = (30,30,30)
+
+        a = ui.Area(
+            position = (x,y),
+            width = 50,
+            height = 50,
+            color = color,
+            corner_radius = 4
+        ).add(ui.root,5)
+
+    startPad = 25
+    tilePad = 5
+    for y in range(8):
+        for x in range(8):
+            makeSquare(
+                startPad + x * (50 + tilePad),
+                startPad + y * (50 + tilePad),
+                (x + y + 1) % 2
+            )
+
+
+!event:onLoad
+    global areaGrid
+    from Chessnut import Game
+    from threading import Thread
+    ingame = False
+
+    root = ui.root
+
+    # Chessnut Game
+    g = Game()
+
+    # Stores the actual images so we can delete them later
+    imageGrid:dict[(int,int): ui.Area] = {}
+
+    # Stores playerlist text objects so we can delete them later
+    playerList = []
+
+    # Stores the chat message text objects so we can delete/move them later
+    chatList = []
+
+    # Chess piece values
+    # --- White ---
+    # 0 = pawn
+    # 1 = knight
+    # 2 = bishop
+    # 3 = rook
+    # 4 = queen
+    # 5 = king
+    # --- Black ---
+    # 6 = pawn
+    # 7 = knight
+    # 8 = bishop
+    # 9 = rook
+    # 10 = queen
+    # 11 = king
+
+    # Stores the actual pieces
+    grid:dict[(int,int): int] = {
+        # Black
+         (0,0): 9, (1,0): 7, (2,0): 8, (3,0): 10, (4,0): 11, (5,0): 8, (6,0): 7, (7,0): 9
+        ,(0,1): 6, (1,1): 6, (2,1): 6, (3,1): 6, (4,1): 6, (5,1): 6, (6,1): 6, (7,1): 6,
+    
+        # White
+        (0,7): 3, (1,7): 1, (2,7): 2, (3,7): 4, (4,7): 5, (5,7): 2, (6,7): 1, (7,7): 3
+        ,(0,6): 0, (1,6): 0, (2,6): 0, (3,6): 0, (4,6): 0, (5,6): 0, (6,6): 0, (7,6): 0
+    }
+
+    def server():
+        global g, coordsToMove
+        while True:
+            msg = s.recv(1024).decode().split('|')
+            if msg == ['']: continue
+            print(msg)
+
+            if msg[0] == 'JOIN':
+                players.append(msg[1])
+                updatePlayerlist()
+
+            elif msg[0] == 'LEFT':
+                players.remove(msg[1])
+                updatePlayerlist()
+
+            elif msg[0] == 'broadcast':
+                if msg[1] == 'chat':
+                    addMessage(msg[2],'|'.join(msg[3:]))
+                
+                if msg[1] == 'move':
+                    pos1 = msg[2].split(',') # From
+                    pos2 = msg[3].split(',') # To
+                    pos1 = int(pos1[0]),int(pos1[1])
+                    pos2 = int(pos2[0]),int(pos2[1])
+
+                    try: g.apply_move(coordsToMove(pos1,pos2))
+                    except: continue
+                    
+                    grid[pos2] = grid[pos1]
+                    grid.pop(pos1)
+
+                    updateBoard()
+
+
+    def pieceIndexToAssetName(index):
+        return ['wp','wn','wb','wr','wq','wk','bp','bn','bb','br','bq','bk'][index]
+
+    def assetNameToPieceIndex(name):
+        return ['wp','wn','wb','wr','wq','wk','bp','bn','bb','br','bq','bk'].index(name)
+
+    def coordsToMove(pos1,pos2):
+        from string import ascii_lowercase as l
+        return f'{l[pos1[0]]}{8-pos1[1]}{l[pos2[0]]}{8-pos2[1]}'
+
+    def setPiece(x,y,piece):
+        global pieceIndexToAssetName, addr
+        if isinstance(piece,int): piece = pieceIndexToAssetName(piece)
+
+        root = ui.root
+
+        if not os.path.exists(f'temp/{piece}.png'):
+            img = get_file((addr,8080),f'assets/chess/{piece}.png')
+            os.makedirs(f'temp',exist_ok=True)
+            with open(f'temp/{piece}.png','wb') as f: f.write(img)
+
+
+        img = ui.Image(
+            position = (
+                25 + x * (50 + 5),
+                25 + y * (50 + 5)
+            ),
+            width = 50,
+            height = 50,
+            image_path = f'temp/{piece}.png'
+        ).add(root,10)
+        imageGrid[x,y] = img
+        grid[x,y] = piece
+
+    def delImg(x,y):
+        root.remove(imageGrid[x,y])
+        imageGrid.pop((x,y))
+    
+    def updateBoard():
+        global imageGrid, grid, setPiece, delImg
+        for (x,y),i in imageGrid.copy().items():
+            root.remove(i)
+            imageGrid.pop((x,y))
+        
+        for (x,y),piece in grid.copy().items():
+            setPiece(x,y,piece)
+    
+    updateBoard()
+
+    def updatePlayerlist():
+        global playerList, root, players, ingame
+
+        for i in playerList:
+            try: root.remove(i)
+            except: ...
+        
+        playerList = []
+        
+        for i,name in enumerate(players):
+            a = ui.Text(
+                position = (500, 345 + i * 40),
+                size = 35,
+                color = (60,60,200),
+                text = name
+            ).add(root,10)
+            playerList.append(a)
+
+    def addMessage(user:str,msg:str):
+        global chatList
+        if len(chatList) > 6:
+            root.remove(chatList.pop(0))
+
+        for i in chatList:
+            i.setPos(i.x, i.y - (i.size-4))
+
+        a = ui.Text(
+            position = (30, 630),
+            size = 25,
+            color = (255,255,255),
+            text = f'{user}: {msg}'
+        ).add(root,10)
+
+        chatList.append(a)
+    
+    def action(text:str):
+        if not ingame:
+            objects['chatBox'].text = ''
+            return
+
+        if '\r' in text:
+            objects['chatBox'].text = ''
+            text = text.replace('\r','')
+            s.send(f'!broadcast|chat|{username}|{text}'.encode())
+            addMessage(username,text)
+
+    selected = None
+    selectedPos = None,None
+    def event(event):
+        global selected, selectedPos, team
+        if event.type == ui.pygame.MOUSEBUTTONDOWN:
+            if event.dict['button'] != 1: return
+            
+            mx,my = event.dict['pos']
+
+            x, y = (25 + mx) // 55 - 1, (25 + my) // 55 - 1
+            
+            piece = grid.get((x,y),False)
+            if (not ingame and not selected) or (ingame and not selected and piece and piece.startswith(team)):
+                selected = piece
+                selectedPos = x,y
+            
+            elif selected:
+                try: g.apply_move(coordsToMove(selectedPos,(x,y)))
+                except Exception as e:
+                    print(e)
+                    selected = piece
+                    selectedPos = x,y
+                    return
+
+
+                grid[(x,y)] = selected
+                grid.pop(selectedPos)
+
+                if ingame:
+                    s.send(f'!broadcast|move|{selectedPos[0]},{selectedPos[1]}|{x},{y}'.encode())
+                
+                selected = None
+                selectedPos = None
+            
+            updateBoard()
+
+            if g.status == g.CHECKMATE:
+                loser = g.state.player
+                if loser == 'w':
+                    print('Black wins!')
+                if loser == 'b':
+                    print('White wins!')
+
+
+    root.addEventListener(event)
+
+    objects['chatBox'].action = action
+
+
+    runScript('initBoard')
+
+!event:onUnload
+    if ingame:
+        s.send(b'!quit')
+
+    print('Unloaded!')
+

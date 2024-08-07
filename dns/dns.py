@@ -12,14 +12,15 @@ s.bind(addr)
 sites = json.load(open('data/sites.json'))
 
 def csHandler(cs:socket.socket,addr:tuple[str,int]):
+    global sites
     while True:
         try:
             msg = cs.recv(1024).decode()
-            print(msg)
+            if msg.strip() == '': return
             
             site = sites.get(msg,'Not found')
             cs.send(site.encode())
-            print(site)
+            print(f'Served site: {msg} -> {site}')
 
         except ConnectionAbortedError:
             print(f'[-] {addr}')
@@ -38,5 +39,5 @@ print(f'Running DNS on {addr}')
 while True:
     cs,addr = s.accept()
     print(f'[+] {addr}')
-    Thread(target=csHandler,args=[cs,addr]).start()
+    Thread(target=csHandler,args=[cs,addr],daemon=True).start()
 

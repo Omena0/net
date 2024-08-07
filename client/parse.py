@@ -2,6 +2,7 @@
 
 import engine as ui
 from typing import Any
+from threading import Thread
 import time as t
 import os
 
@@ -9,22 +10,24 @@ scripts:dict[str,list[str]] = {} # "Script name": [Script code]
 events:dict[str,list[str]]  = {} # "Event name":  [Script code]
 objects:dict[str,Any]       = {} # "Object class": "Script name"
 
-def init(redirect_,get_page_,get_file_,get_from_dns_,addr_):
-    global redirect, get_page, get_file, get_from_dns, addr
+def init(redirect_,get_page_,get_file_,get_from_dns_,addr_, url_):
+    global redirect, get_page, get_file, get_from_dns, addr, url
     redirect = redirect_
     get_page = get_page_
     get_file = get_file_
     get_from_dns = get_from_dns_
     addr = addr_
+    url = url_
 
 def runScript(script:str):
     src = scripts[script]
-    exec(src,globals(),locals())
+    globals().update(locals())
+    exec(src,globals(),globals())
     globals().update(locals())
 
 def runEvent(event):
     if event not in events.keys():
-        print(f'[ERROR] Event not found: {event}')
+        #print(f'[ERROR] Event not found: {event}')
         return
     src = events[event]
     exec(src,globals(),locals())
@@ -33,13 +36,12 @@ def runEvent(event):
 def getLevel(expr:str) -> int:
     return expr.count('    ',0,expr.rfind('    ')+4)
 
-
 def getAttrs(startline:int,source) -> dict:
     attr = {}
     level = getLevel(source[startline])
     for line,i in enumerate(source[startline:]):
         if getLevel(i) < level and i.strip() != '': break
-        print(f'[ATTR]   {line+startline:>3} | {i}')
+        if display_src: print(f'[ATTR]   {line+startline:>3} | {i}')
         i = i.strip()
         if '=' not in i: break
         key, value = i.split('=')
@@ -52,12 +54,13 @@ def getScript(startLine:int,source):
     script = ''
     for line,i in enumerate(source[startLine:]):
         if getLevel(i) == 0 and i.strip() != '': break
-        print(f'[SCRIPT] {line+startLine:>3} | {i}')
+        if display_src: print(f'[SCRIPT] {line+startLine:>3} | {i}')
         i = i.removeprefix('    ')
         script += f'\n{i}'
     return script
 
 def parseExpr(line:int,source,parent=None):
+    global titlebar
     if line >= len(source): return
     if parent is None: parent = ui.root
     expr:str = source[line]
@@ -65,7 +68,7 @@ def parseExpr(line:int,source,parent=None):
     lastLevel = getLevel(source[line-1])
     if level < lastLevel: return parseExpr(line+1,source,parent)
     
-    print(f'[EXPR]   {line:>3} | {expr}')
+    if display_src: print(f'[EXPR]   {line:>3} | {expr}')
     expr = expr.strip()
     
     if expr == '':
@@ -92,7 +95,12 @@ def parseExpr(line:int,source,parent=None):
         attr = getAttrs(line+1,source)
         if not attr:
             return parseExpr(line+1,source,parent)
-        
+
+        # I hate myself for this
+        if use_titlebar:
+                if 'position' in attr.keys():
+                    attr['position'] = attr['position'][0], attr['position'][1] + 25
+
         layer = 0
         if 'layer' in attr.keys(): layer = attr.pop('layer')
         if 'action' in attr.keys():
@@ -104,7 +112,12 @@ def parseExpr(line:int,source,parent=None):
                 attr['bg'] = (100,100,100)
 
             ui.root = ui.Root(title=attr['title'],bg=attr['bg'])
-            if 'size' in attr.keys(): ui.root.res = attr['size']
+
+
+            if 'size' in attr.keys():
+                if use_titlebar:
+                    attr['size'] = attr['size'][0], attr['size'][1] + 25
+                ui.root.res = attr['size']
             if 'resizable' in attr.keys(): ui.root.resizable = attr['resizable']
         
         elif expr == '#frame':
@@ -112,13 +125,16 @@ def parseExpr(line:int,source,parent=None):
             return parseExpr(line+len(attr)+1,source,frame)
         
         elif expr == '#image':
-            path = attr.pop('image_path')
-            t.sleep(0.05)
-            img = get_file(addr,path)
+            path = attr.pop('image_path').split('/')[-1]
             
-            os.makedirs(f'cache',exist_ok=True)
-            with open(f'cache/{path}','wb') as f: f.write(img)
-            ui.Image(**attr,image_path=f'cache/{path}').add(parent,layer)
+            if not os.path.exists(f'temp/{path}'):
+            
+                img = get_file(addr,path)
+
+                os.makedirs(f'temp',exist_ok=True)
+                with open(f'temp/{path}','wb') as f: f.write(img)
+            
+            ui.Image(**attr,image_path=f'temp/{path}').add(parent,layer)
             return parseExpr(line+len(attr)+1,source,parent)
 
         else:
@@ -136,7 +152,7 @@ def parseExpr(line:int,source,parent=None):
 
 
 def render(src:str):
-    global events, scripts
+    global events, scripts, titlebar
     ui.pygame.quit()
     events = {}
     scripts = {}
@@ -148,14 +164,31 @@ def render(src:str):
 
     parseExpr(0,source)
     
+    t.sleep(0.25)
+    
     if not ui.root:
         print('[ERROR] "ui.root" Is not defined.')
         return
     
     runEvent('onLoad')
 
-    ui.root.show(ui.root.resizable)
+    if not hasattr(ui.root,'resizable'):
+        ui.root.resizable = False
+
+    ui.root.show(ui.root.resizable,extraFlag=ui.pygame.NOFRAME if use_titlebar else 0)
+
+    def frame():
+        global titlebar
+        titlebar.text = ui.root._title
+
+    if use_titlebar:
+        titlebar = ui.Titlebar(
+            ui.root._title
+        ).add(ui.root,10)
+        ui.root.addFrameListener(frame)
+
     ui.mainloop()
     runEvent('onUnload')
 
-
+display_src = False
+use_titlebar = False

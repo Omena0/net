@@ -17,14 +17,10 @@
     size = 50
 
 #text
-    text = 'This domain is for use in illustrative examples in documents. You may use this'
+    text = 'This domain is for use in illustrative examples in documents. You may use this\n'
     position = (50,150)
     size = 25
 
-#text
-    text = 'domain in literature without prior coordination or asking for permission.'
-    position = (50,190)
-    size = 25
 
 !script:click
     import webbrowser

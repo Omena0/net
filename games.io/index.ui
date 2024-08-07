@@ -14,35 +14,35 @@
     layer = -1
 
 #text
-    position = (50, 50)
+    position = (50, 30)
     text = "Games.io - Your hub for games"
     size = 60
     color = (60,60,200)
 
 #text
-    position = (60,100)
+    position = (60,75)
     text = "Under construction - Click a button to play"
     size = 35
     color = (100,100,255)
 
 !script:snake
     print('Redirecting...')
-    redirect('games.io/snake')
+    redirect('games.io/g/snake')
 
 !script:life
     print('Redirecting...')
-    redirect('games.io/life')
+    redirect('games.io/g/life')
 
 !script:pong
     print('Redirecting...')
-    redirect('games.io/pong')
+    redirect('games.io/g/pong')
 
 #image
-    position = (80,150)
-    image_path = 'snake.png'
+    position = (80,130)
+    image_path = 'assets/snake.png'
 
 #button
-    position = (65,310)
+    position = (65,290)
     width = 200
     height = 50
     text = "Snake"
@@ -54,11 +54,11 @@
     layer = 1
 
 #image
-    position = (430,150)
-    image_path = 'life.png'
+    position = (430,130)
+    image_path = 'assets/life.png'
 
 #button
-    position = (415,310)
+    position = (415,290)
     width = 200
     height = 50
     text = "Life"
@@ -70,11 +70,11 @@
     layer = 1
 
 #image
-    position = (80,370)
-    image_path = 'snake.png'
+    position = (80,360)
+    image_path = 'assets/snake.png'
 
 #button
-    position = (65,530)
+    position = (65,520)
     width = 200
     height = 50
     text = "Pong"
