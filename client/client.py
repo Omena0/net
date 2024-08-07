@@ -93,8 +93,8 @@ while True:
     try:
         import parse
 
-        #url = input('URL: ')
-        url = 'localhost/g/chess'
+        url = input('URL: ')
+
         if url.strip() == '': continue
         if url.strip() not in ['localhost','127.0.0.1']:
             addr = get_from_dns(url)
@@ -107,7 +107,6 @@ while True:
         if not page: continue
 
         parse.render(page)
-        exit()
 
     except Exception as e:
         print(e)
