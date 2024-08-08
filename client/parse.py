@@ -153,18 +153,12 @@ def parseExpr(line:int,source,parent=None):
 
 def render(src:str):
     global events, scripts, titlebar
-    ui.pygame.quit()
-    events = {}
-    scripts = {}
-    ui.root = None
 
     source = src.splitlines()
     source.append('')
     source.append('')
 
     parseExpr(0,source)
-    
-    t.sleep(0.25)
     
     if not ui.root:
         print('[ERROR] "ui.root" Is not defined.')
@@ -187,8 +181,14 @@ def render(src:str):
         ).add(ui.root,10)
         ui.root.addFrameListener(frame)
 
+    ui.clock = ui.pygame.time.Clock()
     ui.mainloop()
     runEvent('onUnload')
+
+    ui.pygame.quit()
+    events = {}
+    scripts = {}
+    ui.root = None
 
 display_src = False
 use_titlebar = False

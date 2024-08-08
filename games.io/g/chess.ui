@@ -180,7 +180,7 @@
     gridsize = 8
 
     def makeSquare(x,y,color):
-        global imageGrid
+        global imageGrid, areaGrid
 
         if color == 1:
             color = (200,200,200)
@@ -194,6 +194,7 @@
             color = color,
             corner_radius = 4
         ).add(ui.root,5)
+        areaGrid[x//55,y//55] = a
 
     startPad = 25
     tilePad = 5
@@ -210,6 +211,7 @@
     global areaGrid
     from Chessnut import Game
     from threading import Thread
+    from copy import deepcopy as copy
     ingame = False
 
     root = ui.root
@@ -218,13 +220,18 @@
     g = Game()
 
     # Stores the actual images so we can delete them later
-    imageGrid:dict[(int,int): ui.Area] = {}
+    imageGrid:dict[(int,int): ui.Image] = {}
+
+    # Store the grid
+    areaGrid:dict[(int,int): ui.Area] = {}
 
     # Stores playerlist text objects so we can delete them later
     playerList = []
 
     # Stores the chat message text objects so we can delete/move them later
     chatList = []
+
+    team = 'w'
 
     # Chess piece values
     # --- White ---
@@ -278,7 +285,12 @@
                     pos1 = int(pos1[0]),int(pos1[1])
                     pos2 = int(pos2[0]),int(pos2[1])
 
-                    try: g.apply_move(coordsToMove(pos1,pos2))
+                    if len(msg) == 5:
+                        promote = msg[4]
+                    else:
+                        promote = ''
+
+                    try: g.apply_move(coordsToMove(pos1,pos2,promote))
                     except: continue
                     
                     grid[pos2] = grid[pos1]
@@ -286,16 +298,25 @@
 
                     updateBoard()
 
-
     def pieceIndexToAssetName(index):
         return ['wp','wn','wb','wr','wq','wk','bp','bn','bb','br','bq','bk'][index]
 
     def assetNameToPieceIndex(name):
         return ['wp','wn','wb','wr','wq','wk','bp','bn','bb','br','bq','bk'].index(name)
 
-    def coordsToMove(pos1,pos2):
+    def coordsToMove(pos1,pos2,promote=''):
         from string import ascii_lowercase as l
-        return f'{l[pos1[0]]}{8-pos1[1]}{l[pos2[0]]}{8-pos2[1]}'
+        return f'{l[pos1[0]]}{8-pos1[1]}{l[pos2[0]]}{8-pos2[1]}{promote}'
+
+    def convertNotation(text:str):
+        if text.strip() == '': return None
+        out = ''
+        if text.lower() == text:
+            out += 'w'
+        else:
+            out += 'b'
+        out += text.lower()
+        return out
 
     def setPiece(x,y,piece):
         global pieceIndexToAssetName, addr
@@ -304,7 +325,7 @@
         root = ui.root
 
         if not os.path.exists(f'temp/{piece}.png'):
-            img = get_file((addr,8080),f'assets/chess/{piece}.png')
+            img = get_file(addr,f'assets/chess/{piece}.png')
             os.makedirs(f'temp',exist_ok=True)
             with open(f'temp/{piece}.png','wb') as f: f.write(img)
 
@@ -326,10 +347,17 @@
         imageGrid.pop((x,y))
     
     def updateBoard():
-        global imageGrid, grid, setPiece, delImg
+        global imageGrid, grid, setPiece, delImg, convertNotation, assetNameToPieceIndex
         for (x,y),i in imageGrid.copy().items():
             root.remove(i)
             imageGrid.pop((x,y))
+
+        grid = {}
+
+        for i in range(8*8):
+            piece = convertNotation(g.board.get_piece(i))
+            if piece:
+                grid[i%8,i//8] = assetNameToPieceIndex(piece)
         
         for (x,y),piece in grid.copy().items():
             setPiece(x,y,piece)
@@ -384,47 +412,167 @@
 
     selected = None
     selectedPos = None,None
+    cantMove = False
     def event(event):
-        global selected, selectedPos, team
-        if event.type == ui.pygame.MOUSEBUTTONDOWN:
-            if event.dict['button'] != 1: return
-            
-            mx,my = event.dict['pos']
+        global selected, selectedPos, team, areaGrid, things, cantMove
 
-            x, y = (25 + mx) // 55 - 1, (25 + my) // 55 - 1
-            
-            piece = grid.get((x,y),False)
-            if (not ingame and not selected) or (ingame and not selected and piece and piece.startswith(team)):
+        if g.status == g.CHECKMATE:
+            loser = g.state.player
+            cantMove = True
+            if loser == team:
+                print('You Lose!')
+            else:
+                print('You Win!')
+            redirect('g/chess')
+
+        if event.type != ui.pygame.MOUSEBUTTONDOWN: return
+
+        if cantMove: return
+
+        if event.dict['button'] != 1: return
+        
+        mx,my = event.dict['pos']
+
+        x, y = (25 + mx) // 55 - 1, (25 + my) // 55 - 1
+
+        if not (x in range(0,8) and y in range(0,8)):
+            return
+        
+        piece = grid.get((x,y),False)
+        if selectedPos == (x,y):
+            for (x,y),i in areaGrid.items():
+                i.color = (200,200,200) if (x + y + 1) % 2 else (30,30,30)
+        
+        else:
+            areaGrid[(x,y)].color = (60,60,200)
+
+
+        if (not ingame and not selected) or (ingame and not selected and piece and piece.startswith(team)):
+            selected = piece
+            selectedPos = x,y
+        
+        elif selected:
+
+            move = coordsToMove(selectedPos,(x,y))
+
+            # Try to move
+            try: g.apply_move(move)
+            except Exception as e: # Illegal move
+                print(e)
+
+                # Try move again but promote to queen
+                fen = g.get_fen()
+                try:
+                    g.apply_move(move+'q')
+                except Exception as e:
+                    # Could not promote, load previous state and continue as if nothing happened
+                    ...
+                else:
+                    # Rollback the board
+                    g.set_fen(fen)
+
+                    cantMove = True
+                    print('Can promote!')
+                    # Could promote! (yay) ask the user to select which piece to promote to
+                    # Aka draw the thing
+                    things = []
+                    for i,t in enumerate(['q','r','b','n']):
+                        p = team + t
+
+                        comp = ui.Image(
+                            position = (25 + mx + i * 55, my),
+                            width = 55,
+                            height = 55,
+                            image_path = f'temp/{p}.png'
+                        ).add(root,16)
+                        things.append(comp)
+
+                    def a(promote):
+                        global g, ingame, s, areaGrid, updateBoard, cantMove, things
+                        cantMove = False
+                        try: g.apply_move(move+promote)
+                        except Exception as e: print(f'Failed to promote [{e}]')
+
+                        if ingame:
+                            s.send(f'!broadcast|move|{selectedPos[0]},{selectedPos[1]}|{x},{y}'.encode())
+
+                        for (x,y),i in areaGrid.items():
+                            i.color = (200,200,200) if (x + y + 1) % 2 else (30,30,30)
+                        
+                        for i in things:
+                            try: root.remove(i)
+                            except: ...
+
+                        updateBoard()
+
+                    # Queen
+                    comp = ui.Button(
+                        position = (25 + mx + 0 * 55, my),
+                        width = 55,
+                        height = 55,
+                        corner_radius = 0,
+                        color = (60,60,200),
+                        text = '',
+                        size = 0,
+                        action = lambda: a('q')
+                    ).add(root,15)
+                    things.append(comp)
+
+                    # Rook
+                    comp = ui.Button(
+                        position = (25 + mx + 1 * 55, my),
+                        width = 55,
+                        height = 55,
+                        corner_radius = 0,
+                        color = (60,60,200),
+                        text = '',
+                        size = 0,
+                        action = lambda: a('r')
+                    ).add(root,15)
+                    things.append(comp)
+
+                    # Bishop
+                    comp = ui.Button(
+                        position = (25 + mx + 2 * 55, my),
+                        width = 55,
+                        height = 55,
+                        corner_radius = 0,
+                        color = (60,60,200),
+                        text = '',
+                        size = 0,
+                        action = lambda: a('b')
+                    ).add(root,15)
+                    things.append(comp)
+
+                    # Knight
+                    comp = ui.Button(
+                        position = (25 + mx + 3 * 55, my),
+                        width = 55,
+                        height = 55,
+                        corner_radius = 0,
+                        color = (60,60,200),
+                        text = '',
+                        size = 0,
+                        action = lambda: a('n')
+                    ).add(root,15)
+                    things.append(comp)
+
+                g.set_fen(fen)
                 selected = piece
                 selectedPos = x,y
+                return
             
-            elif selected:
-                try: g.apply_move(coordsToMove(selectedPos,(x,y)))
-                except Exception as e:
-                    print(e)
-                    selected = piece
-                    selectedPos = x,y
-                    return
 
-
-                grid[(x,y)] = selected
-                grid.pop(selectedPos)
-
-                if ingame:
-                    s.send(f'!broadcast|move|{selectedPos[0]},{selectedPos[1]}|{x},{y}'.encode())
-                
-                selected = None
-                selectedPos = None
+            if ingame:
+                s.send(f'!broadcast|move|{selectedPos[0]},{selectedPos[1]}|{x},{y}'.encode())
             
-            updateBoard()
+            selected = None
+            selectedPos = None
+            
+            for (x,y),i in areaGrid.items():
+                i.color = (200,200,200) if (x + y + 1) % 2 else (30,30,30)
 
-            if g.status == g.CHECKMATE:
-                loser = g.state.player
-                if loser == 'w':
-                    print('Black wins!')
-                if loser == 'b':
-                    print('White wins!')
-
+        updateBoard()
 
     root.addEventListener(event)
 
