@@ -19,7 +19,7 @@ names:dict[socket.socket:str] = {}
 def csHandler(cs:socket.socket,addr:tuple[str,int]):
     while True:
         try:
-            msg = cs.recv(1024).decode()
+            msg = cs.recv(2048).decode()
             if msg.strip() == '': return
 
             # Support online games

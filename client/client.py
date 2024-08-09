@@ -2,12 +2,13 @@ from tkinter import messagebox
 import requests
 import socket
 from os import chdir
+from sys import getsizeof
+import time as t
 
 # Imports for use in .ui scripts
 import threading
 import Chessnut
 import random
-import time
 import sys
 
 try: chdir('client')
@@ -44,13 +45,23 @@ def get_from_dns(url:str, nocache=False):
     s = socket.socket()
     s.connect(dns_addr)
     s.send(url.encode())
-    addr = s.recv(128).decode()
+    addr = s.recv(2048).decode()
     if addr == 'Not found': return None
     if addr == '500 Internal Server Error': return None
     print(addr)
     addr = addr.split(':')
     localDns[url] = addr[0],int(addr[1])
     return addr[0],int(addr[1])
+
+def recvall(s:socket.socket):
+    do_recieve = True
+    buf = bytes()
+    while do_recieve:
+        t.sleep(0.05) # Wait a bit so we dont recieve faster than the server can send
+        a = s.recv(2048)
+        if getsizeof(a) < 2048: do_recieve = False
+        buf += a
+    return buf
 
 def get_file(addr,url):
     s = socket.socket()
@@ -59,7 +70,7 @@ def get_file(addr,url):
     print(f'Getting file: {url}')
     
     s.send(f'/{url}'.encode())
-    page = s.recv(4294967296)
+    page = recvall(s)
 
     return page
 
@@ -77,7 +88,8 @@ def get_page(url):
     print(f'Getting file: {url.removesuffix('.ui') if url else 'index'}.ui')
     
     s.send(f'/{url}'.encode())
-    page = s.recv(4294967296).decode()
+
+    page = recvall(s).decode()
 
     return page
 

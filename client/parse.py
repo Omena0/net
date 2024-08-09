@@ -190,5 +190,5 @@ def render(src:str):
     scripts = {}
     ui.root = None
 
-display_src = False
+display_src = True
 use_titlebar = False
