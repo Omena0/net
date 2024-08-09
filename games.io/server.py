@@ -34,10 +34,13 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
                 elif msg[0] == 'join_game':
                     id = msg[1]
                     if id not in games.keys():
+                        t.sleep(0.05)
                         cs.send(b'E|Game not found.')
                         del id
                         continue
+
                     games[id].append(cs)
+                    t.sleep(0.05)
                     cs.send('|'.join([names[cs] for cs in games[id]]).encode())
 
                     for i in games[id]:
