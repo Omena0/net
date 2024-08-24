@@ -201,7 +201,6 @@
 
 
 !script:initBoard
-    gridsize = 8
 
     def makeSquare(x,y,color):
         global imageGrid, areaGrid
@@ -258,6 +257,9 @@
     # Stores the turn timer (in seconds)
     turnTimer = [10*60, 10*60]
 
+    # Stores the highlighted pieces
+    highlights = []
+
     team = 'w'
 
     # Chess piece values
@@ -307,7 +309,9 @@
                         promote = ''
 
                     try: g.apply_move(coordsToMove(pos1,pos2,promote))
-                    except: continue
+                    except Exception as e:
+                        print(e)
+                        continue
                     else:
                         gameStarted = True
 
@@ -335,7 +339,7 @@
         return out
 
     def setPiece(x,y,piece):
-        global pieceIndexToAssetName, addr, team
+        global pieceIndexToAssetName, addr, team, grid, imageGrid
         if isinstance(piece,int): piece = pieceIndexToAssetName(piece)
 
         if team == 'b':
@@ -376,9 +380,8 @@
 
         for i in range(8*8):
             piece = convertNotation(g.board.get_piece(i))
-            if piece:
-                grid[i%8,i//8] = piece
-        
+            if piece: grid[i%8,i//8] = piece
+
         for (x,y),piece in grid.copy().items():
             setPiece(x,y,piece)
     
@@ -437,6 +440,9 @@
             turnTimer[0] -= ui.dt / 1000
         else:
             turnTimer[1] -= ui.dt / 1000
+        
+        turnTimer = [max(0,turnTimer[0]), max(0,turnTimer[1])]
+
         a,b = turnTimer
         objects['turnTimer'].text = f'{str(a//60).split('.')[0]:0>2}:{round(a%60):0>2} | {str(b//60).split('.')[0]:0>2}:{round(b%60):0>2}'
 
@@ -446,49 +452,68 @@
     lastMoveTime = None
     gameStarted = False
     def event(event):
-        global selected, selectedPos, team, areaGrid, things, cantMove, t, gameStarted
+        global selected, selectedPos, team, areaGrid, promotionMenu, cantMove, t, gameStarted, highlights, size
 
         if g.status == g.CHECKMATE:
             loser = g.state.player
             cantMove = True
             if loser == team:
-                print('You Lose!')
+                text = 'You Lost! L'
+                print(text)
             else:
-                print('You Win!')
-            redirect('g/chess')
+                text = 'You Won! W'
+                print(text)
+
+            ui.Text(
+                position = (100, 100),
+                size = 50,
+                text = text
+            ).add(root,1000)
+
+            ui.Button(
+                position = (100,150),
+                action = exit,
+                text = 'Exit',
+                size = 50,
+                width = 200,
+                height = 50
+            ).add(ui.root,1000)
 
         if event.type != ui.pygame.MOUSEBUTTONDOWN: return
 
         if cantMove: return
 
         if event.dict['button'] != 1: return
-        
+
         mx,my = event.dict['pos']
 
         x, y = (25 + mx) // 55 - 1, (25 + my) // 55 - 1
+
+        if x not in range(0, 8) or y not in range(0, 8):
+            return
+
+        piece = grid.get((x,y),False)
+
+        if (x,y) in highlights:
+            for (x,y),i in areaGrid.items():
+                i.color = (170,170,170) if (x + y + 1) % 2 else (30,30,30)
+            highlights = []
+
+        else:
+            areaGrid[(x,y)].color = (60,60,200)
+            highlights.append((x,y))
 
         if team == 'b':
             y = 7 - y
             x = 7 - x
 
-        if not (x in range(0,8) and y in range(0,8)):
-            return
-        
-        piece = grid.get((x,y),False)
-        if selectedPos == (x,y):
-            for (x,y),i in areaGrid.items():
-                i.color = (200,200,200) if (x + y + 1) % 2 else (30,30,30)
-        
-        else:
-            if team == 'b': areaGrid[(7-x,7-y)].color = (60,60,200)
-            else: areaGrid[(x,y)].color = (60,60,200)
-
+        if selectedPos and selectedPos == (x,y): return
 
         if (not ingame and not selected) or (ingame and not selected and piece and piece.startswith(team)):
             selected = piece
             selectedPos = x,y
-        
-        elif selected:
+
+        elif selected and len(highlights) <= 2:
 
             move = coordsToMove(selectedPos,(x,y))
 
@@ -512,7 +537,7 @@
                     print('Can promote!')
                     # Could promote! (yay) ask the user to select which piece to promote to
                     # Aka draw the thing
-                    things = []
+                    promotionMenu = []
                     for i,t in enumerate(['q','r','b','n']):
                         p = team + t
 
@@ -522,21 +547,23 @@
                             height = 55,
                             image_path = f'temp/{p}.png'
                         ).add(root,16)
-                        things.append(comp)
+                        promotionMenu.append(comp)
 
                     def a(promote):
-                        global g, ingame, s, areaGrid, updateBoard, cantMove, things
+                        global g, ingame, s, areaGrid, updateBoard, cantMove, promotionMenu, x, y, selectedPos, highlights
                         cantMove = False
                         try: g.apply_move(move+promote)
                         except Exception as e: print(f'Failed to promote [{e}]')
 
                         if ingame:
-                            s.send(f'!broadcast|move|{selectedPos[0]},{selectedPos[1]}|{x},{y}'.encode())
+                            a = 1 if team == 'w' else 6
+                            s.send(f'!broadcast|move|{selectedPos[0]},{a}|{7-x},{7-y}|{promote}'.encode())
 
                         for (x,y),i in areaGrid.items():
-                            i.color = (200,200,200) if (x + y + 1) % 2 else (30,30,30)
-                        
-                        for i in things:
+                            i.color = (170,170,170) if (x + y + 1) % 2 else (30,30,30)
+                        highlights = []
+
+                        for i in promotionMenu:
                             try: root.remove(i)
                             except: ...
 
@@ -553,7 +580,7 @@
                         size = 0,
                         action = lambda: a('q')
                     ).add(root,15)
-                    things.append(comp)
+                    promotionMenu.append(comp)
 
                     # Rook
                     comp = ui.Button(
@@ -566,7 +593,7 @@
                         size = 0,
                         action = lambda: a('r')
                     ).add(root,15)
-                    things.append(comp)
+                    promotionMenu.append(comp)
 
                     # Bishop
                     comp = ui.Button(
@@ -579,7 +606,7 @@
                         size = 0,
                         action = lambda: a('b')
                     ).add(root,15)
-                    things.append(comp)
+                    promotionMenu.append(comp)
 
                     # Knight
                     comp = ui.Button(
@@ -592,24 +619,25 @@
                         size = 0,
                         action = lambda: a('n')
                     ).add(root,15)
-                    things.append(comp)
+                    promotionMenu.append(comp)
 
                 g.set_fen(fen)
                 selected = piece
                 selectedPos = x,y
                 return
-            
+
             else:
                 gameStarted = True
 
             if ingame:
                 s.send(f'!broadcast|move|{selectedPos[0]},{selectedPos[1]}|{x},{y}'.encode())
-            
+
             selected = None
             selectedPos = None
-            
+
             for (x,y),i in areaGrid.items():
-                i.color = (200,200,200) if (x + y + 1) % 2 else (30,30,30)
+                i.color = (170,170,170) if (x + y + 1) % 2 else (30,30,30)
+            highlights = []
 
         updateBoard()
 
@@ -628,5 +656,11 @@
     if ingame:
         s.send(b'!quit')
 
+    for i in imageGrid:
+        root.remove(i)
+    for i in areaGrid:
+        root.remove(i)
+
     print('Unloaded!')
+
 

@@ -1650,7 +1650,7 @@ class LayoutManager():
 
 
 # Raise any exception caught
-debug = False
+debug = True
 
 # Display event debug information
 debug_events = False

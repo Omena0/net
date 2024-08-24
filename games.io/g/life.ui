@@ -107,4 +107,6 @@
 
 !event:onUnload
     print('Unloaded!')
+    root._customEventListeners = []
     redirect('games.io/index')
+
