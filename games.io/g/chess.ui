@@ -1,4 +1,3 @@
-
 #root
     title = "Games.io - Chess"
     size = (700,700)
@@ -148,30 +147,29 @@
         turnTimer = [10*60, 10*60]
         username = objects['username'].text
         id = objects['serverId'].text
-        
+
         s = socket.socket()
         s.connect(addr)
-        
+
         s.send(f'!set_name|{username}'.encode())
         t.sleep(0.1)
         s.send(f'!join_game|{id}'.encode())
 
         players = s.recv(1024).decode().split('|')
-        
+
         if players[0] == 'E':
             print(f'Error: {players[1]}')
-
         else:
             objects['username'].inactive = True
             objects['serverId'].inactive = True
             print(f'Joined game with id {id}')
-        
+
             ingame = True
             team = 'b' if len(players) % 2 == 0 else 'w'
             updatePlayerlist()
 
             Thread(target=server,daemon=True).start()
-        
+
         updateBoard()
 
 !script:createGame
@@ -205,10 +203,7 @@
     def makeSquare(x,y,color):
         global imageGrid, areaGrid
 
-        if color == 1:
-            color = (170,170,170)
-        else:
-            color = (30,30,30)
+        color = (170,170,170) if color == 1 else (30,30,30)
 
         a = ui.Area(
             position = (x,y),
@@ -228,7 +223,6 @@
                 startPad + y * (50 + tilePad),
                 (x + y + 1) % 2
             )
-
 
 !event:onLoad
     global areaGrid
@@ -296,17 +290,14 @@
             elif msg[0] == 'broadcast':
                 if msg[1] == 'chat':
                     addMessage(msg[2],'|'.join(msg[3:]))
-                
+
                 if msg[1] == 'move':
                     pos1 = msg[2].split(',') # From
                     pos2 = msg[3].split(',') # To
                     pos1 = int(pos1[0]),int(pos1[1])
                     pos2 = int(pos2[0]),int(pos2[1])
 
-                    if len(msg) == 5:
-                        promote = msg[4]
-                    else:
-                        promote = ''
+                    promote = msg[4] if len(msg) == 5 else ''
 
                     try: g.apply_move(coordsToMove(pos1,pos2,promote))
                     except Exception as e:
@@ -353,7 +344,6 @@
             os.makedirs(f'temp',exist_ok=True)
             with open(f'temp/{piece}.png','wb') as f: f.write(img)
 
-
         img = ui.Image(
             position = (
                 25 + x * (50 + 5),
@@ -369,7 +359,7 @@
     def delImg(x,y):
         root.remove(imageGrid[x,y])
         imageGrid.pop((x,y))
-    
+
     def updateBoard():
         global imageGrid, grid, setPiece, delImg, convertNotation, assetNameToPieceIndex
         for (x,y),i in imageGrid.copy().items():
@@ -384,7 +374,7 @@
 
         for (x,y),piece in grid.copy().items():
             setPiece(x,y,piece)
-    
+
     updateBoard()
 
     def updatePlayerlist():
@@ -393,9 +383,9 @@
         for i in playerList:
             try: root.remove(i)
             except: ...
-        
+
         playerList = []
-        
+
         for i,name in enumerate(players):
             a = ui.Text(
                 position = (500, 345 + i * 40),
@@ -421,7 +411,7 @@
         ).add(root,10)
 
         chatList.append(a)
-    
+
     def action(text:str):
         if not ingame:
             objects['chatBox'].text = ''
@@ -440,7 +430,7 @@
             turnTimer[0] -= ui.dt / 1000
         else:
             turnTimer[1] -= ui.dt / 1000
-        
+
         turnTimer = [max(0,turnTimer[0]), max(0,turnTimer[1])]
 
         a,b = turnTimer
@@ -457,12 +447,8 @@
         if g.status == g.CHECKMATE:
             loser = g.state.player
             cantMove = True
-            if loser == team:
-                text = 'You Lost! L'
-                print(text)
-            else:
-                text = 'You Won! W'
-                print(text)
+            text = 'You Lost! L' if loser == team else 'You Won! W'
+            print(text)
 
             ui.Text(
                 position = (100, 100),
@@ -538,6 +524,7 @@
                     # Could promote! (yay) ask the user to select which piece to promote to
                     # Aka draw the thing
                     promotionMenu = []
+
                     for i,t in enumerate(['q','r','b','n']):
                         p = team + t
 
@@ -649,7 +636,6 @@
 
     objects['chatBox'].action = action
 
-
     runScript('initBoard')
 
 !event:onUnload
@@ -662,5 +648,3 @@
         root.remove(i)
 
     print('Unloaded!')
-
-
