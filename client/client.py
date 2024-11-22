@@ -3,7 +3,7 @@ import requests
 import socket
 
 # Imports for use in .ui scripts (when using a built executable)
-import threading
+from threading import Thread
 import time as t
 import Chessnut
 import random

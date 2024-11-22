@@ -143,6 +143,7 @@
 
 
 !script:joinGame
+    global s, players
     if not inGame:
         import socket
         g.reset()
@@ -175,23 +176,25 @@
         updateBoard()
 
 !script:createGame
+    global s, players
     if not inGame:
+        from threading import Thread
         import socket
         username = objects['username'].text
         id = objects['serverId'].text
 
         objects['username'].inactive = True
         objects['serverId'].inactive = True
-        
+
         s = socket.socket()
         s.connect(addr)
-        
+
         s.send(f'!set_name|{username}'.encode())
         t.sleep(0.1)
         s.send(f'!create_game|{id}'.encode())
-        
+
         print(f'Game created with id {id}')
-        
+
         inGame = True
         team = 'w'
         players = [username]
@@ -201,7 +204,6 @@
 
 
 !script:initBoard
-
     def makeSquare(x,y,color):
         global imageGrid, areaGrid
 
@@ -227,7 +229,7 @@
             )
 
 !event:onLoad
-    global areaGrid
+    global areaGrid, server, players
     import time as t
     from Chessnut import Game
     from threading import Thread
@@ -275,7 +277,7 @@
     # 11 = king
 
     def server():
-        global g, coordsToMove, gameStarted
+        global g, coordsToMove, gameStarted, updatePlayerlist, s
         while True:
             msg = s.recv(1024).decode().split('|')
             if msg == ['']: continue
@@ -443,6 +445,7 @@
     cantMove = False
     lastMoveTime = None
     gameStarted = False
+
     def event(event):
         global selected, selectedPos, team, areaGrid, promotionMenu, cantMove, t, gameStarted, highlights, size
 

@@ -19,9 +19,8 @@ def init(redirect_,get_page_,get_file_,get_from_dns_,addr_, url_):
 
 def runScript(script:str):
     src = scripts[script]
-    globals().update(locals())
-    exec(src,globals(),globals())
-    globals().update(locals())
+    exec(src,globals(),locals())
+
 
 def runEvent(event):
     if event not in events.keys():

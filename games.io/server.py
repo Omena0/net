@@ -60,6 +60,10 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
                     for i in games[id]:
                         i.send(f'LEFT|{names[cs]}'.encode())
                     games[id].remove(cs)
+
+                    if not games[id]:
+                        games.remove(id)
+
                     names.pop(cs)
                     try: cs.close()
                     except: ...
