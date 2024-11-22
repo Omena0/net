@@ -1,3 +1,5 @@
+#type: ignore
+
 #root
     title = "Games.io - Pong"
     size = (700,500)
@@ -49,23 +51,23 @@
     root = ui.root
     speed = 50
     run = True
-    
+
     vel = (4,2)
-    
+
     p1 = objects['paddle1']
     p2 = objects['paddle2']
     b = objects['ball']
     s = objects['score']
-    
+
     score = 0
-    
+
     def collides(a,b):
         for ax in range(a.x,a.x+a.width):
             for ay in range(a.y,a.y+a.height):
                 if ax in range(b.x,b.x+b.width) and ay in range(b.y,b.y+b.height):
                     return True
         return False
-    
+
     def gameOver():
         global root, run, game_over_text
 
@@ -77,7 +79,7 @@
         ).add(root,5)
 
         run = False
-    
+
     def gameLoop():
         global vel, score
         t.sleep(1)
@@ -90,12 +92,12 @@
                 vel = vel[0], -vel[1]
             elif b.y <= 0:
                 vel = vel[0], -vel[1]
-            
+
             elif b.x <= 0:
                 gameOver()
             elif b.x >= 675:
                 gameOver()
-            
+
             elif collides(b,p1):
                 vel = abs(vel[0]), vel[1]
                 b.setPos(b.x+vel[0],b.y+vel[1])
@@ -105,12 +107,12 @@
                 b.setPos(b.x+vel[0],b.y+vel[1])
                 score += 1
             s.text = f'Score: {score}'
-    
+
     Thread(target=gameLoop).start()
 
     def on_press(key:str):
         if not run:
-            redirect('games.io/pong')
+            redirect('games.io/g/pong')
 
         if key == 'w':
             if p1.y <= 0: return
@@ -124,13 +126,13 @@
         if key == 'k':
             if p2.y >= 350: return
             p2.setPos(p2.x,p2.y+speed)
-        
-        
-    
+
+
+
     def customEventListener(event):
         if event.type == 768: # KEY_DOWN
             on_press(event.dict['unicode'])
-    
+
     root.addEventListener(customEventListener)
 
 

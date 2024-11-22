@@ -19,15 +19,16 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
             msg = msg.decode().removeprefix('/')
             if msg == '': msg = 'index.ui'
             if '.' not in msg: msg += '.ui'
-            
+
             msg = msg.replace('..','').replace(':','')
 
             path = msg.split('/')
-            cpath = '.'
+            searchPath = '.'
+
             for i in path:
                 if i.count('.') == 0:
-                    if i in os.listdir(cpath):
-                        cpath = f'{cpath}/{i}'
+                    if i in os.listdir(searchPath):
+                        searchPath = f'{searchPath}/{i}'
                     else:
                         with open('404.ui','rb') as f: site = f.read()
                     continue
@@ -37,19 +38,19 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
                     print('400 Bad Request')
                     continue
 
-                if i not in os.listdir(cpath):
+                if i not in os.listdir(searchPath):
                     with open('404.ui','rb') as f: site = f.read()
 
                 else:
-                    with open(f'{cpath}/{i}','rb') as f: site = f.read()
-            
+                    with open(f'{searchPath}/{i}','rb') as f: site = f.read()
+
             print(f'Serving file: {msg}')
             cs.send(site)
 
         except ConnectionAbortedError:
             print(f'[-] {addr}')
             return
-        
+
         except Exception as e:
             print(f'[-] {addr} [{e}]')
             try: cs.send(f'500 Internal Server Error{disc}'.encode())

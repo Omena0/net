@@ -1,7 +1,6 @@
-import socket
 from threading import Thread
+import socket
 import json
-import time as t
 
 s = socket.socket()
 
@@ -17,7 +16,7 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
         try:
             msg = cs.recv(1024).decode()
             if msg.strip() == '': return
-            
+
             site = sites.get(msg,'Not found')
             cs.send(site.encode())
             print(f'Served site: {msg} -> {site}')

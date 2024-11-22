@@ -1,3 +1,5 @@
+#type: ignore
+
 #root
     title = "Games.io - Chess"
     size = (700,700)
@@ -141,7 +143,7 @@
 
 
 !script:joinGame
-    if not ingame:
+    if not inGame:
         import socket
         g.reset()
         turnTimer = [10*60, 10*60]
@@ -164,7 +166,7 @@
             objects['serverId'].inactive = True
             print(f'Joined game with id {id}')
 
-            ingame = True
+            inGame = True
             team = 'b' if len(players) % 2 == 0 else 'w'
             updatePlayerlist()
 
@@ -173,7 +175,7 @@
         updateBoard()
 
 !script:createGame
-    if not ingame:
+    if not inGame:
         import socket
         username = objects['username'].text
         id = objects['serverId'].text
@@ -190,7 +192,7 @@
         
         print(f'Game created with id {id}')
         
-        ingame = True
+        inGame = True
         team = 'w'
         players = [username]
         updatePlayerlist()
@@ -229,7 +231,7 @@
     import time as t
     from Chessnut import Game
     from threading import Thread
-    ingame = False
+    inGame = False
 
     root = ui.root
 
@@ -378,7 +380,7 @@
     updateBoard()
 
     def updatePlayerlist():
-        global playerList, root, players, ingame
+        global playerList, root, players, inGame
 
         for i in playerList:
             try: root.remove(i)
@@ -413,7 +415,7 @@
         chatList.append(a)
 
     def action(text:str):
-        if not ingame:
+        if not inGame:
             objects['chatBox'].text = ''
             return
 
@@ -495,7 +497,7 @@
 
         if selectedPos and selectedPos == (x,y): return
 
-        if (not ingame and not selected) or (ingame and not selected and piece and piece.startswith(team)):
+        if (not inGame and not selected) or (inGame and not selected and piece and piece.startswith(team)):
             selected = piece
             selectedPos = x,y
 
@@ -537,12 +539,12 @@
                         promotionMenu.append(comp)
 
                     def a(promote):
-                        global g, ingame, s, areaGrid, updateBoard, cantMove, promotionMenu, x, y, selectedPos, highlights
+                        global g, inGame, s, areaGrid, updateBoard, cantMove, promotionMenu, x, y, selectedPos, highlights
                         cantMove = False
                         try: g.apply_move(move+promote)
                         except Exception as e: print(f'Failed to promote [{e}]')
 
-                        if ingame:
+                        if inGame:
                             a = 1 if team == 'w' else 6
                             s.send(f'!broadcast|move|{selectedPos[0]},{a}|{7-x},{7-y}|{promote}'.encode())
 
@@ -616,7 +618,7 @@
             else:
                 gameStarted = True
 
-            if ingame:
+            if inGame:
                 s.send(f'!broadcast|move|{selectedPos[0]},{selectedPos[1]}|{x},{y}'.encode())
 
             selected = None
@@ -629,6 +631,7 @@
         updateBoard()
 
     def frame():
+        global updateTurnTimer
         updateTurnTimer()
 
     root.addEventListener(event)
@@ -639,7 +642,7 @@
     runScript('initBoard')
 
 !event:onUnload
-    if ingame:
+    if inGame:
         s.send(b'!quit')
 
     for i in imageGrid:

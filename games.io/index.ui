@@ -1,3 +1,4 @@
+#type: ignore
 
 #root
     title = "Games.io - Home"
@@ -25,6 +26,10 @@
     size = 35
     color = (100,100,255)
 
+!script:chess
+    print('Redirecting...')
+    redirect('games.io/g/chess')
+
 !script:snake
     print('Redirecting...')
     redirect('games.io/g/snake')
@@ -37,12 +42,30 @@
     print('Redirecting...')
     redirect('games.io/g/pong')
 
+// Chess
 #image
     position = (80,130)
-    image_path = 'assets/snake.png'
+    image_path = 'assets/chess.png'
 
 #button
     position = (65,290)
+    width = 200
+    height = 50
+    text = "Chess"
+    size = 60
+    color = (55,55,90)
+    hover_color = (80,80,120)
+    font_color = (110,110,255)
+    action = "chess"
+    layer = 1
+
+// Snake
+#image
+    position = (430,130)
+    image_path = 'assets/snake.png'
+
+#button
+    position = (415,290)
     width = 200
     height = 50
     text = "Snake"
@@ -53,12 +76,13 @@
     action = "snake"
     layer = 1
 
+// Life
 #image
-    position = (430,130)
+    position = (80,360)
     image_path = 'assets/life.png'
 
 #button
-    position = (415,290)
+    position = (65,520)
     width = 200
     height = 50
     text = "Life"
@@ -69,12 +93,13 @@
     action = "life"
     layer = 1
 
+// Pong
 #image
-    position = (80,360)
-    image_path = 'assets/snake.png'
+    position = (430,360)
+    image_path = 'assets/pong.png'
 
 #button
-    position = (65,520)
+    position = (415,520)
     width = 200
     height = 50
     text = "Pong"
@@ -84,4 +109,3 @@
     font_color = (110,110,255)
     action = "pong"
     layer = 1
-

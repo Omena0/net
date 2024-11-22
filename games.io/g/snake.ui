@@ -1,3 +1,4 @@
+#type: ignore
 
 #root
     title = "Games.io - Snake"
@@ -46,7 +47,7 @@
 
     def makeSquare(x,y,type='player'):
         global player, players, gridsize, gameOver, r, length, apple
-        
+
         if type == 'player':
             color = (30,90,220)
         if type == 'apple':
@@ -75,7 +76,7 @@
                 length += 1
                 objects['score'].text = f'Score: {length-3}'
                 apple.setPos(r.randrange(0,550,gridsize),r.randrange(0,650,gridsize))
-        
+
         return p
 
     apple = makeSquare(5,3,'apple')
@@ -86,16 +87,10 @@
         if not running:
             redirect('games.io/g/snake')
             return
-            for i in players:
-                root.remove(i)
-            root.remove(apple)
-            root.remove(game_over_text)
-            objects['score'].text = 'Score: 0'
-            runScript('startGame')
-            return
 
         if len(players) > length:
             root.remove(players[0])
+            print(root.children)
             players.pop(0)
 
         player = players[-1]
@@ -114,7 +109,7 @@
     def customEventListener(event:pygame.event.Event):
         if event.type == 768:
             on_press(event.dict['unicode'])
-    
+
     root.addEventListener(customEventListener)
 
 
@@ -123,4 +118,4 @@
 
 !event:onUnload
     print('Unloaded!')
-    redirect('games.io/index')
+    redirect('games.io/index',True)

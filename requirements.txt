@@ -1,0 +1,4 @@
+Chessnut
+requests
+pygame
+nuitka

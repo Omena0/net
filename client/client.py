@@ -1,12 +1,11 @@
-from tkinter import messagebox
+from os import chdir
 import requests
 import socket
-from os import chdir
-from sys import getsizeof
-import time as t
 
-# Imports for use in .ui scripts
+# Imports for use in .ui scripts (when using a built executable)
+from tkinter import messagebox
 import threading
+import time as t
 import Chessnut
 import random
 import sys
@@ -54,12 +53,14 @@ def get_from_dns(url:str, nocache=False):
     return addr[0],int(addr[1])
 
 def recvall(s:socket.socket):
-    do_recieve = True
     buf = bytes()
-    while do_recieve:
-        t.sleep(0.05) # Wait a bit so we dont recieve faster than the server can send
-        a = s.recv(2048)
-        if getsizeof(a) < 2048: do_recieve = False
+    while True:
+        s.settimeout(0.15)
+
+        try: a = s.recv(2048)
+        except socket.timeout:
+            break
+
         buf += a
     return buf
 
@@ -68,11 +69,14 @@ def get_file(addr,url):
     s.connect(addr)
 
     print(f'Getting file: {url}')
-    
-    s.send(f'/{url}'.encode())
-    page = recvall(s)
 
-    return page
+    s.send(f'/{url}'.encode())
+    file = recvall(s)
+
+    if '//404' in file.decode(errors='ignore'):
+        return FileNotFoundError
+
+    return file
 
 def get_page(url):
     if url.strip() == '': return
@@ -81,23 +85,37 @@ def get_page(url):
     except Exception as e:
         print(e)
         return
-    
+
     if '/' not in url: url += '/'
     url = url.split('/',1)[1]
-    
+
     print(f'Getting file: {url.removesuffix('.ui') if url else 'index'}.ui')
-    
+
     s.send(f'/{url}'.encode())
 
     page = recvall(s).decode()
 
     return page
 
-def redirect(site:str):
+def redirect(site:str, unloaded=False):
     import parse
+
+    parse.ui.running = False
+    parse.ui.root = None
+
+    parse.scripts = {}
+    parse.events  = {}
+    parse.objects = {}
+
+    if not unloaded:
+        parse.runEvent('onUnload')
+
     parse.init(redirect,get_page,get_file,get_from_dns,addr,url)
+
     page = get_page(site)
+
     if not page: return
+
     parse.render(page)
 
 
