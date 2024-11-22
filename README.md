@@ -1,7 +1,7 @@
 
 # Net
 
-# [BROWSER DOWNLOAD LINK](https://raw.githubusercontent.com/Omena0/net/main/dist/client.exe)
+# [BROWSER DOWNLOAD LINK](https://raw.githubusercontent.com/Omena0/net/main/dist/Fr-browser.exe)
 
 Literally the internet but its worse than malware
 

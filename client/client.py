@@ -3,7 +3,6 @@ import requests
 import socket
 
 # Imports for use in .ui scripts (when using a built executable)
-from tkinter import messagebox
 import threading
 import time as t
 import Chessnut
