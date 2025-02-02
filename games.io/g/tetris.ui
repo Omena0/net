@@ -1,0 +1,9 @@
+# type: ignore
+
+#root
+    title = "Games.io - Tetris"
+    size = (700,700)
+    bg = (35,35,50)
+    resizable = False
+
+

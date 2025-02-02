@@ -1,4 +1,4 @@
-#type: ignore
+# type: ignore
 
 #root
     title = "Games.io - Snake"
@@ -48,10 +48,11 @@
     def makeSquare(x,y,type='player'):
         global player, players, gridsize, gameOver, r, length, apple
 
-        if type == 'player':
-            color = (30,90,220)
         if type == 'apple':
             color = (140,30,60)
+
+        elif type == 'player':
+            color = (30,90,220)
 
         if (x < 0 or y < 0) or (x > 10 or y > 12):
             gameOver()

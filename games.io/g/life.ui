@@ -27,12 +27,13 @@
     root = ui.root
     gridsize = 25
     grid:dict[(int,int): ui.Area] = {}
-    
+
     ui.usedEvents.append(ui.pygame.MOUSEBUTTONUP)
-    
+
     step = 0
     mouseDown = False
-    
+
+    import itertools
     def makeSquare(x,y,color=(30,90,220)):
         global player, players, gridsize, gameOver, r, length, apple
 
@@ -44,12 +45,12 @@
             corner_radius = 4
         ).add(root,1)
         grid[(x,y)] = a
-    
+
     def delSquare(x,y):
         if (x,y) not in grid.keys(): return
         a = grid.pop((x,y))
         root.remove(a)
-    
+
     def getNeighbours(x,y,grid):
         result = 0
         for xi in range(x-1,x+2):
@@ -58,30 +59,28 @@
                 if grid.get((xi,yi),None):
                     result += 1
         return result
-        
-    
+
+
     def simulationStep():
         global step
         grid_ = grid.copy()
         step += 1
         print(f'Step: {step}')
         objects['step'].text = f'Step: {step}'
-        
-        for x in range(round(800/gridsize)):
-            for y in range(round(700/gridsize)):
-                n = getNeighbours(x,y,grid_)
-                if n in (2,3):
-                    if (x,y) not in grid_ and n == 3:
-                        makeSquare(x,y)
-                else:
-                    if (x,y) in grid_:
-                        delSquare(x,y)
-            
-    
+
+        for x, y in itertools.product(range(round(800/gridsize)), range(round(700/gridsize))):
+            n = getNeighbours(x,y,grid_)
+            if n in (2,3):
+                if (x,y) not in grid_ and n == 3:
+                    makeSquare(x,y)
+            elif (x,y) in grid_:
+                delSquare(x,y)
+
+
     def on_press(key:str):
         if key == ' ':
             simulationStep()
-    
+
     def customEventListener(event):
         global mouseDown, origState
         if event.type == 768:
@@ -98,9 +97,8 @@
             y = round((event.dict['pos'][1]-gridsize/2)/gridsize)
             if (x,y) in grid:
                 if origState: delSquare(x,y)
-            else:
-                if not origState: makeSquare(x,y)
-    
+            elif not origState: makeSquare(x,y)
+
     root.addEventListener(customEventListener)
 
 !event:onLoad

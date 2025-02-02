@@ -1,4 +1,4 @@
-#type: ignore
+# type: ignore
 
 #root
     title = "Games.io - Pong"
@@ -61,7 +61,7 @@
 
     score = 0
 
-    def collides(a,b):
+    def collides(a,b):  # sourcery skip: use-itertools-product
         for ax in range(a.x,a.x+a.width):
             for ay in range(a.y,a.y+a.height):
                 if ax in range(b.x,b.x+b.width) and ay in range(b.y,b.y+b.height):
@@ -110,7 +110,7 @@
 
     Thread(target=gameLoop).start()
 
-    def on_press(key:str):
+    def on_press(key:str):  # sourcery skip: switch
         if not run:
             redirect('games.io/g/pong')
 
@@ -120,6 +120,7 @@
         if key == 's':
             if p1.y >= 350: return
             p1.setPos(p1.x,p1.y+speed)
+
         if key == 'i':
             if p2.y <= 0: return
             p2.setPos(p2.x,p2.y-speed)

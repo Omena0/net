@@ -37,18 +37,24 @@ print(f'DNS Address: {dns_addr}')
 localDns = {"localhost":('127.0.0.1',8080)}
 
 def get_from_dns(url:str, nocache=False):
-    if url == '': return
+    if not url: return
+
     url = url.split('/')[0].split('?')[0]
     if url in localDns and not nocache: return localDns[url]
+
     s = socket.socket()
     s.connect(dns_addr)
     s.send(url.encode())
     addr = s.recv(2048).decode()
+
     if addr == 'Not found': return None
     if addr == '500 Internal Server Error': return None
+
     print(addr)
+
     addr = addr.split(':')
     localDns[url] = addr[0],int(addr[1])
+
     return addr[0],int(addr[1])
 
 def recvall(s:socket.socket):
@@ -72,10 +78,7 @@ def get_file(addr,url):
     s.send(f'/{url}'.encode())
     file = recvall(s)
 
-    if '//404' in file.decode(errors='ignore'):
-        return FileNotFoundError
-
-    return file
+    return FileNotFoundError if '//404' in file.decode(errors='ignore') else file
 
 def get_page(url):
     if url.strip() == '': return
@@ -92,9 +95,8 @@ def get_page(url):
 
     s.send(f'/{url}'.encode())
 
-    page = recvall(s).decode()
-
-    return page
+    # Page
+    return recvall(s).decode()
 
 def redirect(site:str, unloaded=False):
     import parse
@@ -118,6 +120,7 @@ def redirect(site:str, unloaded=False):
     parse.render(page)
 
 
+# Main loop
 while True:
     try:
         import parse
