@@ -100,7 +100,7 @@ def drawTextMultiline(
             char_line = ''
 
             # Add characters to the line until it's too long or the end of the line is reached
-            while line and font.size(char_line + line[0])[0] <= max_width:
+            while max_width and line and font.size(char_line + line[0])[0] <= max_width:
                 char_line += line[0]
                 line = line[1:]
 
@@ -121,7 +121,7 @@ def drawTextMultiline(
             line += word
 
             # Check if the line is too long
-            if font.render(line, 1, color, bg_color).get_width() > max_width:
+            if max_width and font.render(line, 1, color, bg_color).get_width() > max_width:
                 last_space = line.rfind(' ')
 
                 # If there is a space, split the line at that point

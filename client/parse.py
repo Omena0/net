@@ -56,7 +56,7 @@ def getScript(startLine:int,source):
         script += f'\n{i}'
     return script
 
-def parseExpr(line:int,source,parent=None):
+def parseExpr(line:int,source,parent=None):  # sourcery skip: low-code-quality
     global titlebar
 
     if line >= len(source): return
@@ -76,7 +76,7 @@ def parseExpr(line:int,source,parent=None):
 
     expr = expr.strip()
 
-    if expr == '':
+    if not expr:
         return parseExpr(line+1,source,parent)
 
     if expr.startswith('//'):
@@ -102,12 +102,11 @@ def parseExpr(line:int,source,parent=None):
             return parseExpr(line+1,source,parent)
 
         # I hate myself for this
-        if use_titlebar:
-                if 'position' in attr.keys():
-                    attr['position'] = attr['position'][0], attr['position'][1] + 25
+        if use_titlebar and 'position' in attr.keys():
+            attr['position'] = attr['position'][0], attr['position'][1] + 25
 
-        layer = 0
-        if 'layer' in attr.keys(): layer = attr.pop('layer')
+        layer = attr.pop('layer') if 'layer' in attr.keys() else 0
+
         if 'action' in attr.keys():
             s = attr['action']
             attr['action'] = lambda *_: runScript(s)
@@ -123,6 +122,12 @@ def parseExpr(line:int,source,parent=None):
                     attr['size'] = attr['size'][0], attr['size'][1] + 25
                 ui.root.res = attr['size']
             if 'resizable' in attr.keys(): ui.root.resizable = attr['resizable']
+
+        elif expr == '#text':
+            attr['font'] = ui.getFont(attr.pop('size'))
+            ui.Text(
+                **attr
+            ).add(parent,layer)
 
         elif expr == '#frame':
             frame = ui.Frame(**attr).add(parent,layer)
@@ -140,7 +145,7 @@ def parseExpr(line:int,source,parent=None):
                     print(f'[ERROR] Failed to load image: {path}, File not found.')
                     return parseExpr(line+len(attr)+1,source,parent)
 
-                os.makedirs(f'temp',exist_ok=True)
+                os.makedirs('temp',exist_ok=True)
                 with open(f'temp/{name}','wb') as f: f.write(img)
 
             try: ui.Image(**attr,image_path=f'temp/{name}').add(parent,layer)
@@ -170,8 +175,8 @@ def render(src:str):
     source.append('')
     source.append('')
 
-    if source[0] == '#type: ignore':
-        source[0] == ''
+    if source[0] in {'#type: ignore', '# type: ignore'}:
+        source.pop(0)
 
     parseExpr(0,source)
 

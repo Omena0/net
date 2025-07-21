@@ -23,55 +23,51 @@ def easeOutQuad(t):
 def easeInOutQuad(t):
     t *= 2
     if t < 1:
-        return t * t / 2
-    else:
-        t -= 1
-        return -(t * (t - 2) - 1) / 2
+        return t**2 / 2
+    t -= 1
+    return -(t * (t - 2) - 1) / 2
 
 def easeInCubic(t):
     return t * t * t
 
 def easeOutCubic(t):
     t -= 1
-    return t * t * t + 1
+    return t**2 * t + 1
 
 def easeInOutCubic(t):
     t *= 2
     if t < 1:
-        return t * t * t / 2
-    else:
-        t -= 2
-        return (t * t * t + 2) / 2
+        return t**2 * t / 2
+    t -= 2
+    return (t**2 * t + 2) / 2
 
 def easeInQuart(t):
     return t * t * t * t
 
 def easeOutQuart(t):
     t -= 1
-    return -(t * t * t * t - 1)
+    return -(t**2 * t * t - 1)
 
 def easeInOutQuart(t):
     t *= 2
     if t < 1:
-        return t * t * t * t / 2
-    else:
-        t -= 2
-        return -(t * t * t * t - 2) / 2
+        return t**2 * t * t / 2
+    t -= 2
+    return -(t**2 * t * t - 2) / 2
 
 def easeInQuint(t):
     return t * t * t * t * t
 
 def easeOutQuint(t):
     t -= 1
-    return t * t * t * t * t + 1
+    return t**5 + 1
 
 def easeInOutQuint(t):
     t *= 2
     if t < 1:
-        return t * t * t * t * t / 2
-    else:
-        t -= 2
-        return (t * t * t * t * t + 2) / 2
+        return t**2 * t * t * t / 2
+    t -= 2
+    return (t**2 * t * t * t + 2) / 2
 
 def easeInExpo(t):
     return math.pow(2, 10 * (t - 1))
@@ -83,24 +79,22 @@ def easeInOutExpo(t):
     t *= 2
     if t < 1:
         return math.pow(2, 10 * (t - 1)) / 2
-    else:
-        t -= 1
-        return -math.pow(2, -10 * t) - 1
+    t -= 1
+    return -math.pow(2, -10 * t) - 1
 
 def easeInCirc(t):
     return 1 - math.sqrt(1 - t * t)
 
 def easeOutCirc(t):
     t -= 1
-    return math.sqrt(1 - t * t)
+    return math.sqrt(1 - t**2)
 
 def easeInOutCirc(t):
     t *= 2
     if t < 1:
-        return -(math.sqrt(1 - t * t) - 1) / 2
-    else:
-        t -= 2
-        return (math.sqrt(1 - t * t) + 1) / 2
+        return -(math.sqrt(1 - t**2) - 1) / 2
+    t -= 2
+    return (math.sqrt(1 - t**2) + 1) / 2
 
 
 def get_easing(method,ease_in=True,ease_out=True):
@@ -110,46 +104,39 @@ def get_easing(method,ease_in=True,ease_out=True):
             return linear
         case 'sine':
             if ease_in:
-                if ease_out: return easeInOutSine
-                else: return easeInSine
+                return easeInOutSine if ease_out else easeInSine
             else:
-                if ease_out: return easeOutSine
+                return easeOutSine
         case 'quad':
             if ease_in:
-                if ease_out: return easeInOutQuad
-                else: return easeInQuad
+                return easeInOutQuad if ease_out else easeInQuad
             else:
-                if ease_out: return easeOutQuad
+                return easeOutQuad
         case 'cubic':
             if ease_in:
-                if ease_out: return easeInOutCubic
-                else: return easeInCubic
+                return easeInOutCubic if ease_out else easeInCubic
             else:
-                if ease_out: return easeOutCubic
+                return easeOutCubic
         case 'quart':
             if ease_in:
-                if ease_out: return easeInOutQuart
-                else: return easeInQuart
+                return easeInOutQuart if ease_out else easeInQuart
             else:
-                if ease_out: return easeOutQuart
+                return easeOutQuart
         case 'quint':
             if ease_in:
-                if ease_out: return easeInOutQuint
-                else: return easeInQuint
+                return easeInOutQuint if ease_out else easeInQuint
             else:
-                if ease_out: return easeOutQuint
+                return easeOutQuint
         case 'exp':
             if ease_in:
-                if ease_out: return easeInOutExpo
-                else: return easeInExpo
+                return easeInOutExpo if ease_out else easeInExpo
             else:
-                if ease_out: return easeOutExpo
+                return easeOutExpo
         case 'circ':
             if ease_in:
-                if ease_out: return easeInOutCirc
-                else: return easeInCirc
+                return easeInOutCirc if ease_out else easeInCirc
             else:
-                if ease_out: return easeOutCirc
+                return easeOutCirc
         case _:
             return easeInOutSine
 
