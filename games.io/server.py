@@ -17,6 +17,7 @@ names:dict[socket.socket:str] = {}
 
 
 def csHandler(cs:socket.socket,addr:tuple[str,int]):
+    # sourcery skip: avoid-builtin-shadow
     while True:
         try:
             msg = cs.recv(2048).decode()
@@ -79,18 +80,20 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
             path = msg.split('/')
             searchPath = '.'
 
+            site = None
             for i in path:
                 if i.count('.') == 0:
                     if i in os.listdir(searchPath):
                         searchPath = f'{searchPath}/{i}'
                     else:
                         with open('404.ui','rb') as f: site = f.read()
+                        break
                     continue
 
                 elif i.split('.')[1] not in ['ui','png','jpeg','txt']:
                     cs.send(f'400 Bad Request{disclaimer}'.encode())
                     print('400 Bad Request')
-                    continue
+                    break
 
                 if i not in os.listdir(searchPath):
                     with open('404.ui','rb') as f: site = f.read()
@@ -98,9 +101,12 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
 
                 else:
                     with open(f'{searchPath}/{i}','rb') as f: site = f.read()
+                
+                break
 
             print(f'Serving file: {msg}')
-            cs.send(site)
+            if site is not None:
+                cs.send(site)
 
         except ConnectionAbortedError:
             print(f'[-] {addr}')
@@ -108,7 +114,8 @@ def csHandler(cs:socket.socket,addr:tuple[str,int]):
 
         except Exception as e:
             print(f'[-] {addr} [{e}]')
-            try: cs.send(f'500 Internal Server Error'.encode())
+            try:
+                cs.send(b'500 Internal Server Error')
             except: ...
             return
 

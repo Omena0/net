@@ -85,7 +85,7 @@ def drawTextMultiline(
         y (int): y position of text
         color (tuple[int,int,int]): Text color
         font (pygame.font.Font): Text font
-        max_width (int): Max width, will line wrap if it exeeds this.
+        max_width (int): Max width, will line wrap if it exceeds this.
         bg_color (tuple[int,int,int], optional): Background color, set if you want anti-aliasing. Defaults to None.
         _i (int): Internal use. Do not modify.
 
@@ -100,12 +100,23 @@ def drawTextMultiline(
             char_line = ''
 
             # Add characters to the line until it's too long or the end of the line is reached
-            while max_width and line and font.size(char_line + line[0])[0] <= max_width:
-                char_line += line[0]
-                line = line[1:]
+            if max_width:
+                while line and font.size(char_line + line[0])[0] <= max_width:
+                    char_line += line[0]
+                    line = line[1:]
 
-            blits.append((font.render(char_line, 1, color, bg_color), (x, y + (font.get_height() + 8) * i)))
-            i += 1
+                # If nothing was added (single char too wide), add it anyway to avoid infinite loop
+                if not char_line and line:
+                    char_line = line[0]
+                    line = line[1:]
+            else:
+                # No max width, render entire remaining line
+                char_line = line
+                line = ''
+
+            if char_line:
+                blits.append((font.render(char_line, 1, color, bg_color), (x, y + (font.get_height() + 8) * i)))
+                i += 1
         return i
 
     # Split the text by line breaks and render each line
@@ -120,8 +131,8 @@ def drawTextMultiline(
 
             line += word
 
-            # Check if the line is too long
-            if max_width and font.render(line, 1, color, bg_color).get_width() > max_width:
+            # Check if the line is too long (only if max_width is set)
+            if max_width and font.size(line)[0] > max_width:
                 last_space = line.rfind(' ')
 
                 # If there is a space, split the line at that point
@@ -137,7 +148,8 @@ def drawTextMultiline(
 
         # Render the last line
         if line:
-            _i = render_line(line, x, y, _i)
+            blits.append((font.render(line, 1, color, bg_color), (x, y + (font.get_height() + 8) * _i)))
+            _i += 1
 
     blits.reverse()
 
@@ -1486,7 +1498,8 @@ class Root:
     def update_all(self):
         global count
         count = 0
-        self.disp.fill(self.bg_color)
+        if hasattr(self, 'disp'):
+            self.disp.fill(self.bg_color)
         def update(object):
             global count
             object.changed = True
@@ -1506,22 +1519,32 @@ class Root:
 def update():  # sourcery skip: extract-method
     global frame, root, dt, running
     try:
-        frame += 1
-        if frame % 1 == 0:
-            root.tick(frame)
-
-        root.render()
+        # Handle events FIRST to prevent OS freezing on Linux
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
                 pygame.quit()
 
-            root.event(event)
+            if root:
+                root.event(event)
 
-        if not running: return
-        dt = clock.tick(120)
+        frame += 1
+        if frame % 1 == 0:
+            if root:
+                root.tick(frame)
 
-        pygame.display.flip()
+        if root:
+            root.render()
+
+        if not running: 
+            return
+        
+        if root and hasattr(root, 'disp'):
+            dt = clock.tick(120)
+            pygame.display.flip()
+        else:
+            dt = clock.tick(120)
+            
         return root
     except pygame.error as e:
         running = False

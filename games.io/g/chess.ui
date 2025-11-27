@@ -369,9 +369,8 @@
         grid = {}
 
         for i in range(8*8):
-            piece = convertNotation(g.board.get_piece(i))
-            if piece: grid[i%8,i//8] = piece
-
+            if piece := convertNotation(g.board.get_piece(i)):
+                grid[i%8,i//8] = piece
         for (x,y),piece in grid.copy().items():
             setPiece(x,y,piece)
 

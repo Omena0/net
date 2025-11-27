@@ -59,44 +59,60 @@ def get_from_dns(url:str, nocache=False):
 
 def recvall(s:socket.socket):
     buf = bytes()
+    s.settimeout(0.5)
+    timeout_count = 0
     while True:
-        s.settimeout(0.15)
-
-        try: a = s.recv(2048)
+        try: 
+            a = s.recv(2048)
+            if not a:
+                break
+            timeout_count = 0
+            buf += a
         except socket.timeout:
-            break
+            timeout_count += 1
+            if timeout_count >= 2:
+                break
 
-        buf += a
     return buf
 
 def get_file(addr,url):
     s = socket.socket()
-    s.connect(addr)
+    try:
+        s.connect(addr)
 
-    print(f'Getting file: {url}')
+        print(f'Getting file: {url}')
 
-    s.send(f'/{url}'.encode())
-    file = recvall(s)
+        s.send(f'/{url}'.encode())
+        file = recvall(s)
+        s.close()
 
-    return FileNotFoundError if '//404' in file.decode(errors='ignore') else file
+        return FileNotFoundError if '//404' in file.decode(errors='ignore') else file
+    finally:
+        try: s.close()
+        except: ...
 
 def get_page(url):
     if url.strip() == '': return
     s = socket.socket()
-    try: s.connect(addr)
+    try:
+        s.connect(addr)
     except Exception as e:
         print(e)
         return
 
-    if '/' not in url: url += '/'
-    url = url.split('/',1)[1]
+    try:
+        if '/' not in url: url += '/'
+        url = url.split('/',1)[1]
 
-    print(f'Getting file: {url.removesuffix('.ui') if url else 'index'}.ui')
+        print(f'Getting file: {url.removesuffix('.ui') if url else 'index'}.ui')
 
-    s.send(f'/{url}'.encode())
+        s.send(f'/{url}'.encode())
 
-    # Page
-    return recvall(s).decode()
+        # Page
+        return recvall(s).decode()
+    finally:
+        try: s.close()
+        except: ...
 
 def redirect(site:str, unloaded=False):
     import parse

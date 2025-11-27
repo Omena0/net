@@ -19,23 +19,22 @@ def init(redirect_,get_page_,get_file_,get_from_dns_,addr_, url_):
 
 def runScript(script:str):
     src = scripts[script]
-    exec(src,globals(),locals())
-
+    exec(src, globals())
 
 def runEvent(event):
     if event not in events.keys():
         #print(f'[ERROR] Event not found: {event}')
         return
     src = events[event]
-    exec(src,globals(),locals())
-    globals().update(locals())
+    exec(src, globals())
 
 def getLevel(expr:str) -> int:
     return expr.count('    ',0,expr.rfind('    ')+4)
 
-def getAttrs(startLine:int,source) -> dict:
+def getAttrs(startLine:int,source) -> tuple[dict, int]:
     attr = {}
     level = getLevel(source[startLine])
+    lines_parsed = 0
     for line,i in enumerate(source[startLine:]):
         if getLevel(i) < level and i.strip() != '': break
         if display_src: print(f'[ATTR]   {line+startLine:>3} | {i}')
@@ -45,7 +44,8 @@ def getAttrs(startLine:int,source) -> dict:
         key = key.strip()
         value = eval(value)
         attr[key] = value
-    return attr
+        lines_parsed = line + 1
+    return attr, lines_parsed
 
 def getScript(startLine:int,source):
     script = ''
@@ -97,7 +97,7 @@ def parseExpr(line:int,source,parent=None):  # sourcery skip: low-code-quality
         class_ = None
         if ':' in expr:
             expr, class_ = expr.split(':')
-        attr = getAttrs(line+1,source)
+        attr, attr_lines = getAttrs(line+1,source)
         if not attr:
             return parseExpr(line+1,source,parent)
 
@@ -131,7 +131,7 @@ def parseExpr(line:int,source,parent=None):  # sourcery skip: low-code-quality
 
         elif expr == '#frame':
             frame = ui.Frame(**attr).add(parent,layer)
-            return parseExpr(line+len(attr)+1,source,frame)
+            return parseExpr(line+attr_lines+1,source,frame)
 
         elif expr == '#image':
             path = attr.pop('image_path')
@@ -143,7 +143,7 @@ def parseExpr(line:int,source,parent=None):  # sourcery skip: low-code-quality
 
                 if img == FileNotFoundError:
                     print(f'[ERROR] Failed to load image: {path}, File not found.')
-                    return parseExpr(line+len(attr)+1,source,parent)
+                    return parseExpr(line+attr_lines+1,source,parent)
 
                 os.makedirs('temp',exist_ok=True)
                 with open(f'temp/{name}','wb') as f: f.write(img)
@@ -152,7 +152,7 @@ def parseExpr(line:int,source,parent=None):  # sourcery skip: low-code-quality
             except Exception as e:
                 print(f'[ERROR] Failed to load image: {path}, {e}')
 
-            return parseExpr(line+len(attr)+1,source,parent)
+            return parseExpr(line+attr_lines+1,source,parent)
 
         else:
             a = getattr(ui,expr.replace('#','').capitalize())(
@@ -162,11 +162,10 @@ def parseExpr(line:int,source,parent=None):  # sourcery skip: low-code-quality
                 objects[class_] = a
 
 
-        return parseExpr(line+len(attr)+1,source,parent)
+        return parseExpr(line+attr_lines+1,source,parent)
 
     else:
         parseExpr(line+1,source,parent)
-
 
 def render(src:str):
     global events, scripts, titlebar
